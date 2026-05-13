@@ -96,7 +96,7 @@
 
 ## 1. Project Overview
 
-**FilterAnalyzer** is a web application for the analysis and design of classical analog and IIR digital low-pass filters. It replaces the workflow of running MATLAB scripts manually — or using the existing Streamlit prototype at [filteranalyzer.streamlit.app](https://filteranalyzer.streamlit.app) — with a fast, multi-panel browser-based tool that is equally suited to engineering students, researchers, and practising DSP engineers.
+**FilterAnalyzer** is a web application for the analysis and design of classical analog and IIR digital low-pass filters. It replaces the workflow of running MATLAB scripts manually, or using the existing Streamlit prototype at [filteranalyzer.streamlit.app](https://filteranalyzer.streamlit.app), with a fast, multi-panel browser-based tool that is equally suited to engineering students, researchers, and practising DSP engineers.
 
 The application implements four classical approximation functions from first principles, faithfully reproducing the mathematical framework described in:
 
@@ -140,17 +140,17 @@ The math engine is a direct Python port of the MATLAB programs (`btw.m`, `cheb.m
 - Frequency unit toggle: rad/s ↔ Hz (conversion handled transparently).
 
 ### Computed Outputs (per design)
-- **Filter order n** — computed and displayed prominently.
-- **Pole-zero plot** — interactive scatter on the s-plane (analog) or z-plane (digital), with conjugate pairs, locus ellipse/circle, and axes.
-- **Magnitude response** — frequency response |H(jω)| in dB vs. frequency, with passband/stopband specification lines overlaid.
-- **Phase response** — ∠H(jω) in degrees vs. frequency.
-- **Group delay** — −d∠H(jω)/dω vs. frequency.
-- **Transfer function** — rendered as a fraction of polynomials in s (analog) or z⁻¹ (digital), both factored and expanded forms.
-- **Pole and zero coordinates** — tabulated with real and imaginary parts.
+- **Filter order n**: computed and displayed prominently.
+- **Pole-zero plot** interactive scatter on the s-plane (analog) or z-plane (digital), with conjugate pairs, locus ellipse/circle, and axes.
+- **Magnitude response**: frequency response |H(jω)| in dB vs. frequency, with passband/stopband specification lines overlaid.
+- **Phase response**: ∠H(jω) in degrees vs. frequency.
+- **Group delay**: −d∠H(jω)/dω vs. frequency.
+- **Transfer function**: rendered as a fraction of polynomials in s (analog) or z⁻¹ (digital), both factored and expanded forms.
+- **Pole and zero coordinates**: tabulated with real and imaginary parts.
 
 ### Workspace
-- **Multi-tab design workspace** — open up to 8 simultaneous filter designs, each independently computed. Each tab is named by the user or auto-named (e.g., `BTW-n5`, `ELL-n3`).
-- **Compare mode** — overlay magnitude responses from two open tabs on a single chart.
+- **Multi-tab design workspace**: open up to 8 simultaneous filter designs, each independently computed. Each tab is named by the user or auto-named (e.g., `BTW-n5`, `ELL-n3`).
+- **Compare mode**: overlay magnitude responses from two open tabs on a single chart.
 
 ### Save & Load
 - Save any design configuration to a `.fcfg` file (JSON format, see §13).
