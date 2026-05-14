@@ -1,16 +1,48 @@
-import { useTabStore } from "./store/tabStore";
+import { useState }           from "react";
+import { SplashScreen }       from "./components/layout/SplashScreen";
+import { Header }             from "./components/layout/Header";
+import { TabBar }             from "./components/layout/TabBar";
+import { Sidebar }            from "./components/layout/Sidebar";
+import { ResultsPanel }       from "./components/results/ResultsPanel";
+import { useTabStore }        from "./store/tabStore";
 
-function App() {
-  const tabs = useTabStore((s) => s.tabs);
-  const activeTabId = useTabStore((s) => s.activeTabId);
-  const activeTab = tabs.find((t) => t.id === activeTabId);
+const SPLASH_KEY = "fa_splash_shown";
+
+export default function App() {
+  const [showSplash, setShowSplash] = useState(
+    () => !sessionStorage.getItem(SPLASH_KEY)
+  );
+
+  const tabs     = useTabStore((s) => s.tabs);
+  const activeId = useTabStore((s) => s.activeTabId);
+  const setError = useTabStore((s) => s.setError);
+
+  const activeTab = tabs.find((t) => t.id === activeId)!;
 
   return (
-    <div>
-      <h1>FilterAnalyzer</h1>
-      <p>Active tab: {activeTab?.name}</p>
-    </div>
+    <>
+      {showSplash && (
+        <SplashScreen
+          onComplete={() => {
+            sessionStorage.setItem(SPLASH_KEY, "1");
+            setShowSplash(false);
+          }}
+        />
+      )}
+
+      <div className={`app-shell ${showSplash ? "is-hidden" : ""}`}>
+        <Header />
+        <TabBar />
+        <Sidebar tabId={activeId} />
+        <ResultsPanel
+          result={activeTab.result}
+          isLoading={activeTab.isLoading}
+          error={activeTab.error}
+          onDismissError={() => setError(activeId, null)}
+          freqUnit={activeTab.freqUnit}
+          request={activeTab.request}
+        />
+      </div>
+    </>
   );
 }
-
-export default App;
