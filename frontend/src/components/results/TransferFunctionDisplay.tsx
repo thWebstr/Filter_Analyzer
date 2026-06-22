@@ -1,4 +1,4 @@
-import { FilterResult } from "../../types/filter";
+import { FilterResult } from "../../types/filter";gt
 
 interface Props {
   result: FilterResult;
