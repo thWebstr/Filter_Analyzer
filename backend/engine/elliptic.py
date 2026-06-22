@@ -21,7 +21,7 @@ def cei_forward(k: float) -> float:
     """
     x = np.linspace(0, math.pi / 2, 500_000)
     integrand = (1 - k ** 2 * np.sin(x) ** 2) ** (-0.5)
-    return float(np.trapz(integrand, x))
+    return float(np.trapezoid(integrand, x))
 
 
 def cei_inverse(u: float, k: float) -> float:

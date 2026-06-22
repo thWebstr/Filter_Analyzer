@@ -1,5 +1,5 @@
 import { useState }                   from "react";
-import { FilterResult }               from "../../types/filter";
+import type { FilterResult } from "../../types/filter";
 import { ErrorBanner }                from "../layout/ErrorBanner";
 import { MagnitudeResponsePlot }      from "./MagnitudeResponsePlot";
 import { PhaseResponsePlot }          from "./PhaseResponsePlot";
