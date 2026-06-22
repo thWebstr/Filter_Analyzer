@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { FilterResult } from "../../types/filter";gt
+=======
+import type { FilterResult } from "../../types/filter";
+>>>>>>> 31fd8123ae53e15158dc1a096f7580a642265148
 
 interface Props {
   result: FilterResult;
