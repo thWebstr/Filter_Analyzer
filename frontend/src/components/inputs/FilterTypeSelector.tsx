@@ -17,10 +17,11 @@ export function FilterTypeSelector({ value, onChange }: Props) {
           Analog
         </button>
         <button
-          className={`toggle-btn ${value === "digital" ? "active" : ""}`}
-          onClick={() => onChange("digital")}
+          className="toggle-btn locked"
+          onClick={() => alert("Digital IIR feature is not available yet. Stay tuned!")}
+          title="Feature coming soon"
         >
-          Digital IIR
+          🔒 Digital IIR
         </button>
       </div>
     </div>

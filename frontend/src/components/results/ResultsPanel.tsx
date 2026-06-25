@@ -6,15 +6,17 @@ import { PhaseResponsePlot }          from "./PhaseResponsePlot";
 import { GroupDelayPlot }             from "./GroupDelayPlot";
 import { PoleZeroPlot }               from "./PoleZeroPlot";
 import { PoleZeroTable }              from "./PoleZeroTable";
+import { FrequencyDataTable }         from "./FrequencyDataTable";
 import { TransferFunctionDisplay }    from "./TransferFunctionDisplay";
 
-type PlotTab = "magnitude" | "phase" | "group_delay" | "pole_zero";
+type PlotTab = "magnitude" | "phase" | "group_delay" | "pole_zero" | "data";
 
 const PLOT_TABS: { key: PlotTab; label: string }[] = [
   { key: "magnitude",   label: "Magnitude"   },
   { key: "phase",       label: "Phase"       },
   { key: "group_delay", label: "Group Delay" },
   { key: "pole_zero",   label: "Pole-Zero"   },
+  { key: "data",        label: "Data"        },
 ];
 
 interface Props {
@@ -157,6 +159,12 @@ export function ResultsPanel({
             locusType={result.locus_type}
             locusParams={result.locus_params}
             filterType={result.filter_type}
+          />
+        )}
+        {activePlot === "data" && (
+          <FrequencyDataTable
+            freqResponse={result.freq_response}
+            freqUnit={freqUnit}
           />
         )}
       </div>

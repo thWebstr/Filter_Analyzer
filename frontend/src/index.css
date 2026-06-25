@@ -854,9 +854,13 @@ body {
   cursor: pointer;
   font-size: 18px;
   transition: all var(--transition-fast);
+  filter: grayscale(1); /* Remove emoji yellow */
+  opacity: 0.8;
 }
 
 .theme-toggle:hover {
+  filter: grayscale(0);
+  opacity: 1;
   background: var(--color-bg-elevated);
   border-color: var(--color-accent);
   transform: rotate(15deg);
@@ -1293,8 +1297,65 @@ body {
   margin-top: 4px;
 }
 
-.tf-digital__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
-.tf-digital__actions { display: flex; gap: var(--space-2); }
-.pz-table-container { overflow-x: auto; }
-.table-actions { display: flex; justify-content: flex-end; margin-bottom: var(--space-3); gap: var(--space-2); }
+.tf-digital__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+.tf-digital__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.pz-table-container {
+  overflow-x: auto;
+}
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+}
 
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+
+.data-table-container {
+  overflow-x: auto;
+  max-height: 400px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  margin-top: var(--space-4);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-elevated);
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  z-index: 10;
+}
+
+.data-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.data-table tr:hover td {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
