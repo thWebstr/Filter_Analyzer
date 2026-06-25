@@ -18,6 +18,9 @@ export function PoleZeroPlot({
   filterType,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tooltipRef = useRef<d3.Selection<HTMLDivElement, unknown, null, undefined> | null>(null);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -164,22 +167,25 @@ export function PoleZeroPlot({
         .attr("opacity", 0.5);
     }
 
-    // Tooltip div
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .style("position",   "fixed")
-      .style("background", "var(--color-bg-elevated)")
-      .style("border",     "1px solid var(--color-border)")
-      .style("border-radius", "6px")
-      .style("padding",    "6px 10px")
-      .style("font-size",  "11px")
-      .style("font-family","IBM Plex Mono, monospace")
-      .style("color",      "var(--color-text-primary)")
-      .style("pointer-events", "none")
-      .style("opacity", "0")
-      .style("transition", "opacity 150ms ease")
-      .style("z-index", "1000");
+    // Tooltip div — created once, reused across re-renders to prevent DOM accumulation
+    if (!tooltipRef.current) {
+      tooltipRef.current = d3
+        .select(wrapperRef.current!)
+        .append("div")
+        .style("position",   "fixed")
+        .style("background", "var(--color-bg-elevated)")
+        .style("border",     "1px solid var(--color-border)")
+        .style("border-radius", "6px")
+        .style("padding",    "6px 10px")
+        .style("font-size",  "11px")
+        .style("font-family","IBM Plex Mono, monospace")
+        .style("color",      "var(--color-text-primary)")
+        .style("pointer-events", "none")
+        .style("opacity", "0")
+        .style("transition", "opacity 150ms ease")
+        .style("z-index", "1000");
+    }
+    const tooltip = tooltipRef.current;
 
     // Zeros — open circles
     svg
@@ -305,17 +311,21 @@ export function PoleZeroPlot({
         g.selectAll(".tick line").attr("stroke", "#4A5068");
       });
 
+    // Only remove tooltip on true component unmount (no-op on deps change)
     return () => {
-      tooltip.remove();
+      tooltipRef.current?.remove();
+      tooltipRef.current = null;
     };
   }, [poles, zeros, locusType, locusParams, filterType]);
 
   return (
-    <svg
-      ref={svgRef}
-      width="100%"
-      height={280}
-      className="pz-plot-svg"
-    />
+    <div ref={wrapperRef} style={{ position: "relative" }}>
+      <svg
+        ref={svgRef}
+        width="100%"
+        height={280}
+        className="pz-plot-svg"
+      />
+    </div>
   );
 }

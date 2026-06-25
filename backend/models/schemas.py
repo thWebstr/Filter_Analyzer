@@ -1,3 +1,4 @@
+import math
 from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional, Literal
 
@@ -43,7 +44,7 @@ class FilterRequest(BaseModel):
             raise ValueError("sampling_freq is required for digital filters")
         if self.filter_type == "digital" and self.sampling_freq is not None:
             # convert w_stop to hz for nyquist check if needed
-            w_stop_hz = self.w_stop if self.freq_unit == "hz" else self.w_stop / (2 * 3.14159265358979)
+            w_stop_hz = self.w_stop if self.freq_unit == "hz" else self.w_stop / (2 * math.pi)
             if self.sampling_freq <= 2 * w_stop_hz:
                 raise ValueError("sampling_freq must be greater than 2 × w_stop (Nyquist criterion)")
         return self

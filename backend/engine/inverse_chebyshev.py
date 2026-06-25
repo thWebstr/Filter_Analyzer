@@ -20,7 +20,10 @@ def design_inverse_chebyshev(
     """
 
     # --- Step 1: Compute epsilon_i, order n, Di ---
+    # Stopband ripple factor (used for order computation)
     epsilon_i = 1 / math.sqrt(10 ** (-0.1 * a_stop) - 1)      # Eq. 43
+    # Passband ripple factor (consistent label with other engines)
+    epsilon_pass = 1 / math.sqrt(10 ** (-0.1 * a_pass) - 1)
 
     n_exact = math.acosh(
         math.sqrt(
@@ -100,7 +103,8 @@ def design_inverse_chebyshev(
 
     return {
         "order": n,
-        "epsilon": epsilon_i,
+        "epsilon": epsilon_pass,      # passband ripple factor (consistent with other engines)
+        "epsilon_stop": epsilon_i,    # stopband ripple factor (Inv. Cheb specific)
         "Di": Di,
         "poles": poles_out,
         "zeros": zeros_out,

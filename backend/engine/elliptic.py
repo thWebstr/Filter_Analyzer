@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy.special import ellipk, ellipj, ellipkinc
 from engine.common import (
     compute_epsilon,
     get_order_mode,
@@ -9,74 +10,53 @@ from engine.common import (
 
 
 # ---------------------------------------------------------------------------
-# CEI helpers — port of CEI.m and CEIinv.m
+# CEI helpers — backed by scipy.special (C-level, accurate, fast)
 # ---------------------------------------------------------------------------
 
 def cei_forward(k: float) -> float:
     """
-    Complete Elliptic Integral K(k).
-    Forward approach: compute integral value given k.
-    Port of CEI.m — vectorized with NumPy.
+    Complete Elliptic Integral of the first kind K(k).
+    Uses scipy.special.ellipk(m) where m = k².
     Eq. 67/68 (Zubair & Olawale, 2022).
     """
-    x = np.linspace(0, math.pi / 2, 500_000)
-    integrand = (1 - k ** 2 * np.sin(x) ** 2) ** (-0.5)
-    return float(np.trapezoid(integrand, x))
+    return float(ellipk(k ** 2))
 
 
-def cei_inverse(u: float, k: float) -> float:
+def _ellipj(u: float, k: float):
     """
-    Reverse CEI: find phi such that integral from 0 to phi = u.
-    Port of CEIinv.m.
-    Returns phi.
+    Return (sn, cn, dn) = Jacobi elliptic functions at amplitude u, modulus k.
+    Uses scipy.special.ellipj(u, m) where m = k².
     """
-    dx = 1e-4
-    total = 0.0
-    x = 0.0
-    limit = 5 * math.pi
-
-    while x <= limit:
-        val = 1 - k ** 2 * math.sin(x) ** 2
-        if val <= 0:
-            x += dx
-            continue
-        total += val ** (-0.5) * dx
-        if total >= u:
-            return x
-        x += dx
-
-    raise ValueError(
-        f"CEI inverse did not converge: u={u:.6f}, k={k:.6f}. "
-        "Try relaxing filter specifications."
-    )
+    sn_v, cn_v, dn_v, _ = ellipj(u, k ** 2)
+    return float(sn_v), float(cn_v), float(dn_v)
 
 
 def sn(u: float, k: float) -> float:
-    """Jacobian elliptic function sn(u,k) = sin(phi)."""
-    phi = cei_inverse(u, k)
-    return math.sin(phi)
+    """Jacobi elliptic sn(u, k)."""
+    sn_v, _, _ = _ellipj(u, k)
+    return sn_v
 
 
 def cn(u: float, k: float) -> float:
-    """Jacobian elliptic function cn(u,k) = cos(phi)."""
-    phi = cei_inverse(u, k)
-    return math.cos(phi)
+    """Jacobi elliptic cn(u, k)."""
+    _, cn_v, _ = _ellipj(u, k)
+    return cn_v
 
 
 def dn(u: float, k: float) -> float:
-    """Jacobian elliptic function dn(u,k) = sqrt(1 - k^2 * sin^2(phi))."""
-    phi = cei_inverse(u, k)
-    return math.sqrt(1 - k ** 2 * math.sin(phi) ** 2)
+    """Jacobi elliptic dn(u, k)."""
+    _, _, dn_v = _ellipj(u, k)
+    return dn_v
 
 
 def sc_inverse(u: float, k: float) -> float:
     """
-    sc^-1(u, k): find phi such that tan(phi) = u,
-    via reverse CEI. Returns atan(phi).
+    sc⁻¹(u, k): Inverse Jacobi sc function.
+    sc(φ, k) = sin(φ)/cos(φ) = u  →  φ = atan(u).
+    Returns F(atan(u), k²) = incomplete elliptic integral.
     Port of CEIinv usage for v0 computation (Eq. 74).
     """
-    phi = cei_inverse(u, k)
-    return math.atan(phi)
+    return float(ellipkinc(math.atan(u), k ** 2))
 
 
 # ---------------------------------------------------------------------------
@@ -113,15 +93,13 @@ def design_elliptic(
     mode = get_order_mode(n)
 
     # --- Step 3: Compute v0 ---
-    # sc^-1(epsilon^-1, kn) via reverse CEI
+    # sc^-1(epsilon^-1, kn) via incomplete elliptic integral
     sc_inv = sc_inverse(epsilon ** -1, kn)
     v0 = (cei_rt * sc_inv) / (n * cei_kn)                      # Eq. 74
 
     # Precompute values needed for pole calculation
     k_prime_rt = math.sqrt(1 - rt ** 2)
-    sn_v0  = sn(v0, k_prime_rt)
-    cn_v0  = cn(v0, k_prime_rt)
-    dn_v0  = dn(v0, k_prime_rt)
+    sn_v0, cn_v0, dn_v0 = _ellipj(v0, k_prime_rt)
     sn2_v0 = sn_v0 ** 2
 
     # --- Step 4: Real pole for odd order ---
@@ -146,21 +124,19 @@ def design_elliptic(
     for m in m_range:
         fm = f_formula(m)
 
-        cn_fm = cn(fm, rt)
-        dn_fm = dn(fm, rt)
-        sn_fm = sn(fm, rt)
-        dn2_fm = dn_fm ** 2
+        sn_fm, cn_fm_v, dn_fm_v = _ellipj(fm, rt)
+        dn2_fm = dn_fm_v ** 2
 
         denom = 1 - dn2_fm * sn2_v0
 
         if abs(denom) < 1e-12:
             continue
 
-        sigma_m = -(cn_fm * dn_fm * sn_v0 * cn_v0) / denom    # Eq. 75
-        omega_m = (sn_fm * dn_v0) / denom                      # Eq. 76
+        sigma_m = -(cn_fm_v * dn_fm_v * sn_v0 * cn_v0) / denom    # Eq. 75
+        omega_m = (sn_fm * dn_v0) / denom                          # Eq. 76
         raw_poles.append((sigma_m, omega_m))
 
-        # Zero location — purely imaginary                      Eq. 80/81
+        # Zero location — purely imaginary                          Eq. 80/81
         omega_z = 1 / (rt * sn_fm) if abs(sn_fm) > 1e-12 else 1e12
         raw_zeros.append((0.0, omega_z))
 

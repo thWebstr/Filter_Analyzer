@@ -83,7 +83,6 @@ def design_filter(request: FilterRequest):
         else:
             # Digital IIR via bilinear transform
             result = apply_bilinear_transform(
-                analog_result={},
                 sampling_freq=request.sampling_freq,
                 w_pass=request.w_pass,
                 w_stop=request.w_stop,

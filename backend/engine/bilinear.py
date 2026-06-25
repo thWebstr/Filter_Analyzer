@@ -4,7 +4,6 @@ from scipy import signal
 
 
 def apply_bilinear_transform(
-    analog_result: dict,
     sampling_freq: float,
     w_pass: float,
     w_stop: float,
@@ -19,8 +18,6 @@ def apply_bilinear_transform(
 
     Parameters
     ----------
-    analog_result : dict
-        Result from any analog design function (already computed).
     sampling_freq : float
         Sampling frequency in Hz.
     w_pass, w_stop : float
@@ -34,8 +31,7 @@ def apply_bilinear_transform(
 
     Returns
     -------
-    dict — analog_result updated with digital_coeffs and digital
-           frequency response.
+    dict — result dict with digital_coeffs and digital frequency response.
     """
 
     Fs = sampling_freq
