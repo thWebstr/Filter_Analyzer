@@ -5,13 +5,16 @@ import { TabBar }             from "./components/layout/TabBar";
 import { Sidebar }            from "./components/layout/Sidebar";
 import { ResultsPanel }       from "./components/results/ResultsPanel";
 import { useTabStore }        from "./store/tabStore";
+import { useThemeInit }       from "./utils/theme";
 
 const SPLASH_KEY = "fa_splash_shown";
 
 export default function App() {
+  useThemeInit();
   const [showSplash, setShowSplash] = useState(
     () => !sessionStorage.getItem(SPLASH_KEY)
   );
+
 
   const tabs     = useTabStore((s) => s.tabs);
   const activeId = useTabStore((s) => s.activeTabId);

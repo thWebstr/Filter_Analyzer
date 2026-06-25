@@ -6,8 +6,11 @@ from typing import Optional, Literal
 class FilterRequest(BaseModel):
     approximation: Literal["butterworth", "chebyshev", "inverse_chebyshev", "elliptic"]
     filter_type: Literal["analog", "digital"]
+    band_config: Literal["lowpass", "highpass", "bandpass", "bandstop"] = "lowpass"
     w_pass: float
     w_stop: float
+    w_pass2: Optional[float] = None   # upper passband edge — required for BP/BS
+    w_stop2: Optional[float] = None   # upper stopband edge — required for BP/BS
     a_pass: float
     a_stop: float
     freq_unit: Literal["rad_s", "hz"]
@@ -36,17 +39,60 @@ class FilterRequest(BaseModel):
 
     @model_validator(mode="after")
     def cross_field_checks(self):
-        if self.w_stop <= self.w_pass:
-            raise ValueError("w_stop must be greater than w_pass")
+        bc = self.band_config
+
+        # ── dB ordering (applies to all band configs) ─────────────────────
         if self.a_stop >= self.a_pass:
             raise ValueError("a_stop must be more negative than a_pass")
+
+        # ── LP: w_stop > w_pass ────────────────────────────────────────────
+        if bc == "lowpass":
+            if self.w_stop <= self.w_pass:
+                raise ValueError("For lowpass: w_stop must be greater than w_pass")
+
+        # ── HP: w_stop < w_pass (stopband below passband) ─────────────────
+        elif bc == "highpass":
+            if self.w_stop >= self.w_pass:
+                raise ValueError("For highpass: w_stop must be less than w_pass (stopband edge is below passband)")
+
+        # ── BP: w_stop < w_pass < w_pass2 < w_stop2 ───────────────────────
+        elif bc == "bandpass":
+            if self.w_pass2 is None or self.w_stop2 is None:
+                raise ValueError("bandpass requires w_pass2 and w_stop2")
+            if self.w_stop >= self.w_pass:
+                raise ValueError("For bandpass: w_stop (lower SB) must be less than w_pass (lower PB)")
+            if self.w_pass >= self.w_pass2:
+                raise ValueError("For bandpass: w_pass2 (upper PB) must be greater than w_pass")
+            if self.w_stop2 <= self.w_pass2:
+                raise ValueError("For bandpass: w_stop2 (upper SB) must be greater than w_pass2")
+
+        # ── BS: w_pass < w_stop < w_stop2 < w_pass2 ───────────────────────
+        elif bc == "bandstop":
+            if self.w_pass2 is None or self.w_stop2 is None:
+                raise ValueError("bandstop requires w_pass2 and w_stop2")
+            if self.w_stop <= self.w_pass:
+                raise ValueError("For bandstop: w_stop (lower SB edge) must be greater than w_pass")
+            if self.w_stop2 <= self.w_stop:
+                raise ValueError("For bandstop: w_stop2 (upper SB edge) must be greater than w_stop")
+            if self.w_pass2 <= self.w_stop2:
+                raise ValueError("For bandstop: w_pass2 (upper PB edge) must be greater than w_stop2")
+
+        # ── Digital Nyquist check ──────────────────────────────────────────
         if self.filter_type == "digital" and self.sampling_freq is None:
             raise ValueError("sampling_freq is required for digital filters")
+
         if self.filter_type == "digital" and self.sampling_freq is not None:
-            # convert w_stop to hz for nyquist check if needed
-            w_stop_hz = self.w_stop if self.freq_unit == "hz" else self.w_stop / (2 * math.pi)
-            if self.sampling_freq <= 2 * w_stop_hz:
-                raise ValueError("sampling_freq must be greater than 2 × w_stop (Nyquist criterion)")
+            # Use the highest frequency edge for Nyquist check
+            highest_freq = self.w_stop
+            if bc in ("highpass",):
+                highest_freq = self.w_pass
+            elif bc in ("bandpass", "bandstop") and self.w_stop2 is not None:
+                highest_freq = self.w_stop2
+
+            freq_hz = highest_freq if self.freq_unit == "hz" else highest_freq / (2 * math.pi)
+            if self.sampling_freq <= 2 * freq_hz:
+                raise ValueError("sampling_freq must be greater than 2 × highest edge frequency (Nyquist criterion)")
+
         return self
 
 
@@ -65,8 +111,10 @@ class FrequencyResponse(BaseModel):
 class FilterResult(BaseModel):
     approximation: str
     filter_type: str
+    band_config: str = "lowpass"
     order: int
     epsilon: float
+    epsilon_stop: Optional[float] = None
     poles: list[ComplexNumber]
     zeros: list[ComplexNumber]
     poly_num: list[float]

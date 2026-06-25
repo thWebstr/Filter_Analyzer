@@ -1,4 +1,5 @@
-import { Logo } from "./Logo";
+import { Logo }        from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Header() {
   return (
@@ -7,6 +8,7 @@ export function Header() {
         <Logo size="sm" />
       </div>
       <div className="header__right">
+        <ThemeToggle />
         <span className="header__version">
           v1.0.0
         </span>

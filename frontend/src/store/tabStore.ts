@@ -4,13 +4,17 @@ import type {
   FilterRequest,
   FilterResult,
   FreqUnit,
+  BandConfig,
 } from "../types/filter";
 
 const DEFAULT_REQUEST: FilterRequest = {
   approximation: "butterworth",
   filter_type: "analog",
+  band_config: "lowpass",
   w_pass: 1.0,
   w_stop: 2.0,
+  w_pass2: null,
+  w_stop2: null,
   a_pass: -1.0,
   a_stop: -40.0,
   freq_unit: "rad_s",
@@ -44,6 +48,7 @@ interface TabStore {
 
   // Per-tab state updates
   updateRequest: (id: string, patch: Partial<FilterRequest>) => void;
+  setBandConfig: (id: string, band: BandConfig) => void;
   setLoading: (id: string, loading: boolean) => void;
   setResult: (id: string, result: FilterResult) => void;
   setError: (id: string, error: string | null) => void;
@@ -98,6 +103,26 @@ export const useTabStore = create<TabStore>((set, get) => ({
           ? {
               ...t,
               request: { ...t.request, ...patch },
+              hasUnsavedChanges: true,
+              error: null,
+            }
+          : t
+      ),
+    })),
+
+  setBandConfig: (id, band) =>
+    set((s) => ({
+      tabs: s.tabs.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              // Reset second-pair frequencies when switching band
+              request: {
+                ...t.request,
+                band_config: band,
+                w_pass2: null,
+                w_stop2: null,
+              },
               hasUnsavedChanges: true,
               error: null,
             }

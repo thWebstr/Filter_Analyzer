@@ -4,8 +4,10 @@ import { FilterTypeSelector } from "../inputs/FilterTypeSelector";
 import { ApproxSelector }     from "../inputs/ApproxSelector";
 import { FreqUnitToggle }     from "../inputs/FreqUnitToggle";
 import { ParameterInputs }    from "../inputs/ParameterInputs";
+import { BandConfigSelector } from "../inputs/BandConfigSelector";
 import { SaveLoadBar }        from "../workspace/SaveLoadBar";
 import { Spinner }            from "../layout/Spinner";
+import type { BandConfig }    from "../../types/filter";
 
 interface Props {
   tabId: string;
@@ -15,27 +17,57 @@ export function Sidebar({ tabId }: Props) {
   const tabs          = useTabStore((s) => s.tabs);
   const updateRequest = useTabStore((s) => s.updateRequest);
   const setFreqUnit   = useTabStore((s) => s.setFreqUnit);
+  const setBandConfig = useTabStore((s) => s.setBandConfig);
 
   const { run } = useFilterDesign(tabId);
 
   const tab = tabs.find((t) => t.id === tabId);
   if (!tab) return null;
 
+  const bc   = tab.request.band_config;
+  const isBP = bc === "bandpass";
+  const isBS = bc === "bandstop";
+
   const handleDesign = () => {
     run(tab.request);
   };
 
-  // Basic pre-flight check before enabling the button
-  const canDesign =
+  // Band-config-aware pre-flight check
+  const baseOk =
     !tab.isLoading &&
-    tab.request.w_stop > tab.request.w_pass &&
     tab.request.a_stop < tab.request.a_pass &&
     tab.request.a_pass < 0 &&
+    tab.request.w_pass > 0 &&
+    tab.request.w_stop > 0 &&
     (tab.request.filter_type === "analog" ||
       (tab.request.sampling_freq ?? 0) > 0);
 
+  const freqOk = (() => {
+    if (bc === "lowpass")  return tab.request.w_stop > tab.request.w_pass;
+    if (bc === "highpass") return tab.request.w_stop < tab.request.w_pass;
+    if (bc === "bandpass" || bc === "bandstop") {
+      return (
+        tab.request.w_pass2 !== null &&
+        tab.request.w_stop2 !== null &&
+        tab.request.w_pass2 > 0 &&
+        tab.request.w_stop2 > 0
+      );
+    }
+    return false;
+  })();
+
+  const canDesign = baseOk && freqOk;
+
   return (
     <aside className="sidebar">
+
+      {/* Band configuration */}
+      <div className="sidebar__section">
+        <BandConfigSelector
+          value={bc}
+          onChange={(v: BandConfig) => setBandConfig(tabId, v)}
+        />
+      </div>
 
       {/* Domain */}
       <div className="sidebar__section">

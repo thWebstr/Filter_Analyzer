@@ -6,12 +6,16 @@ export type Approximation =
 
 export type FilterDomain = "analog" | "digital";
 export type FreqUnit = "rad_s" | "hz";
+export type BandConfig = "lowpass" | "highpass" | "bandpass" | "bandstop";
 
 export interface FilterRequest {
   approximation: Approximation;
   filter_type: FilterDomain;
+  band_config: BandConfig;
   w_pass: number;
   w_stop: number;
+  w_pass2: number | null;  // upper passband edge for BP/BS
+  w_stop2: number | null;  // upper stopband edge for BP/BS
   a_pass: number;
   a_stop: number;
   freq_unit: FreqUnit;
@@ -38,8 +42,10 @@ export interface DigitalCoeffs {
 export interface FilterResult {
   approximation: string;
   filter_type: string;
+  band_config: string;
   order: number;
   epsilon: number;
+  epsilon_stop: number | null;
   poles: ComplexNumber[];
   zeros: ComplexNumber[];
   poly_num: number[];

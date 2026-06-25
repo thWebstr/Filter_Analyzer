@@ -68,8 +68,7 @@ def compute_frequency_response(
     frequencies = np.linspace(0.001 * w_pass, w_max, n_points)
 
     magnitude_db = []
-    phase_deg = []
-    group_delay = []
+    phase_rad_raw = []
 
     num = np.array(poly_num)
     den = np.array(poly_den)
@@ -83,12 +82,13 @@ def compute_frequency_response(
         mag_db = 20 * math.log10(mag) if mag > 1e-12 else -240.0
         magnitude_db.append(mag_db)
 
-        # Phase in degrees
-        phase = math.degrees(cmath_phase(H))
-        phase_deg.append(phase)
+        # Phase (raw, in radians — unwrap applied after full loop)
+        phase_rad_raw.append(cmath_phase(H))
 
-    # Group delay: -d(phase)/dw  numerically
-    phase_rad = [math.radians(p) for p in phase_deg]
+    # Unwrap phase to remove ±π discontinuities, then convert to degrees
+    phase_rad = np.unwrap(phase_rad_raw).tolist()
+    phase_deg = [math.degrees(p) for p in phase_rad]
+    group_delay = []
     freq_arr = frequencies.tolist()
 
     for i in range(len(freq_arr)):
