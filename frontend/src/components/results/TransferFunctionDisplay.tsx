@@ -50,9 +50,31 @@ export function TransferFunctionDisplay({ result }: Props) {
       {/* Digital coefficients */}
       {result.digital_coeffs && (
         <div className="tf-digital">
-          <p className="tf-digital__title">
-            Difference Equation Coefficients
-          </p>
+          <div className="tf-digital__header">
+            <p className="tf-digital__title">
+              Difference Equation Coefficients
+            </p>
+            <div className="tf-digital__actions">
+              <button
+                className="icon-btn"
+                onClick={() => {
+                  const bStr = result.digital_coeffs!.b.join(", ");
+                  navigator.clipboard.writeText(`b = [${bStr}]`);
+                }}
+              >
+                📋 Copy B
+              </button>
+              <button
+                className="icon-btn"
+                onClick={() => {
+                   const aStr = result.digital_coeffs!.a.join(", ");
+                   navigator.clipboard.writeText(`a = [${aStr}]`);
+                }}
+              >
+                📋 Copy A
+              </button>
+            </div>
+          </div>
           <div className="tf-digital__coeffs">
             <div>b = [{result.digital_coeffs.b.map((v) => v.toFixed(6)).join(", ")}]</div>
             <div className="tf-digital__a">
@@ -61,6 +83,8 @@ export function TransferFunctionDisplay({ result }: Props) {
           </div>
         </div>
       )}
+
+
     </div>
   );
 }

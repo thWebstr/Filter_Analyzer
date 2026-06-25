@@ -206,7 +206,9 @@ class TestDigital:
 
     def test_digital_nyquist_rejected(self):
         """Sampling freq below Nyquist must be rejected."""
-        bad = {**self.DIGITAL_LP, "sampling_freq": 2.0}  # Fs = 2*w_stop → invalid
+        # highest freq is w_stop = 2.0 rad/s -> ~0.318 Hz. 2*f = ~0.636 Hz.
+        # Setting Fs = 0.5 Hz should trigger 422.
+        bad = {**self.DIGITAL_LP, "sampling_freq": 0.5}
         r = client.post("/api/design", json=bad)
         assert r.status_code == 422
 
@@ -219,7 +221,8 @@ class TestErrors:
     def test_unknown_approximation(self):
         payload = {**BASE_LP, "approximation": "fir"}
         r = client.post("/api/design", json=payload)
-        assert r.status_code == 400
+        # Pydantic Literal handles this -> 422
+        assert r.status_code == 422
 
     def test_bad_attenuation_ordering(self):
         payload = {**BASE_LP, "a_stop": -0.5}  # a_stop > a_pass → invalid

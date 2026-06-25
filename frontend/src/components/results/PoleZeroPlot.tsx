@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
-import * as d3 from "d3";
-import type { ComplexNumber } from "../../types/filter";
+import { useEffect, useRef }       from "react";
+import * as d3                  from "d3";
+import type { ComplexNumber }   from "../../types/filter";
+import { downloadSVG, downloadPNG } from "../../utils/download";
 
 interface Props {
   poles: ComplexNumber[];
@@ -18,18 +19,39 @@ export function PoleZeroPlot({
   filterType,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipRef = useRef<d3.Selection<HTMLDivElement, unknown, null, undefined> | null>(null);
+
+  const handleDownload = (type: "svg" | "png") => {
+    if (!svgRef.current) return;
+    if (type === "svg") downloadSVG(svgRef.current, "pole_zero_plot");
+    else downloadPNG(svgRef.current, "pole_zero_plot");
+  };
 
   useEffect(() => {
     if (!svgRef.current) return;
 
-    const W = svgRef.current.clientWidth  || 400;
-    const H = svgRef.current.clientHeight || 280;
+    // Get theme colors from CSS variables
+    const style = getComputedStyle(document.documentElement);
+    const colorBorder  = style.getPropertyValue("--color-border").trim() || "#262c3a";
+    const colorMuted   = style.getPropertyValue("--color-text-muted").trim() || "#5e6679";
+    const colorPole    = style.getPropertyValue("--color-error").trim() || "#ff4d6a";
+    const colorZero    = style.getPropertyValue("--color-success").trim() || "#4dff9b";
+    const colorLocus   = style.getPropertyValue("--color-warning").trim() || "#ffb347";
+    const colorBg      = style.getPropertyValue("--color-bg-elevated").trim() || "#1f242f";
+
+    const W = containerRef.current?.clientWidth || 400;
+    const H = 280;
     const margin = { top: 20, right: 20, bottom: 30, left: 40 };
     const innerW = W - margin.left - margin.right;
     const innerH = H - margin.top  - margin.bottom;
+
+    // Set SVG viewBox and dimensions
+    d3.select(svgRef.current)
+      .attr("viewBox", `0 0 ${W} ${H}`)
+      .attr("width",  "100%")
+      .attr("height", H);
 
     // Clear previous render
     d3.select(svgRef.current).selectAll("*").remove();
@@ -49,269 +71,160 @@ export function PoleZeroPlot({
     const yPad = Math.max(0.5, (yExtent[1] - yExtent[0]) * 0.3);
 
     const xDomain: [number, number] = [
-      Math.min(xExtent[0] - xPad, -1.5),
-      Math.max(xExtent[1] + xPad,  1.5),
+      Math.min(xExtent[0] - xPad, -1.2),
+      Math.max(xExtent[1] + xPad,  1.2),
     ];
     const yDomain: [number, number] = [
-      Math.min(yExtent[0] - yPad, -1.5),
-      Math.max(yExtent[1] + yPad,  1.5),
+      Math.min(yExtent[0] - yPad, -1.2),
+      Math.max(yExtent[1] + yPad,  1.2),
     ];
 
     const xScale = d3.scaleLinear().domain(xDomain).range([0, innerW]);
     const yScale = d3.scaleLinear().domain(yDomain).range([innerH, 0]);
 
     // Grid
-    svg
-      .append("g")
-      .attr("class", "grid")
-      .selectAll("line.vertical")
-      .data(xScale.ticks(6))
-      .enter()
-      .append("line")
-      .attr("x1", (d) => xScale(d))
-      .attr("x2", (d) => xScale(d))
-      .attr("y1", 0)
-      .attr("y2", innerH)
-      .attr("stroke", "#252A3A")
-      .attr("stroke-width", 0.5);
+    const makeGrid = (scale: d3.AxisScale<any>, orient: "bottom" | "left") =>
+      (orient === "bottom" ? d3.axisBottom(scale) : d3.axisLeft(scale))
+        .ticks(8)
+        .tickSize(- (orient === "bottom" ? innerH : innerW))
+        .tickFormat(() => "");
 
-    svg
-      .append("g")
-      .selectAll("line.horizontal")
-      .data(yScale.ticks(6))
-      .enter()
-      .append("line")
-      .attr("x1", 0)
-      .attr("x2", innerW)
-      .attr("y1", (d) => yScale(d))
-      .attr("y2", (d) => yScale(d))
-      .attr("stroke", "#252A3A")
-      .attr("stroke-width", 0.5);
+    svg.append("g")
+       .attr("class", "pz-grid")
+       .attr("transform", `translate(0,${innerH})`)
+       .call(makeGrid(xScale, "bottom"))
+       .attr("stroke", colorBorder)
+       .attr("opacity", 0.3);
+
+    svg.append("g")
+       .attr("class", "pz-grid")
+       .call(makeGrid(yScale, "left"))
+       .attr("stroke", colorBorder)
+       .attr("opacity", 0.3);
 
     // Axes through origin
     const x0 = xScale(0);
     const y0 = yScale(0);
 
-    svg
-      .append("line")
-      .attr("x1", 0).attr("x2", innerW)
-      .attr("y1", y0).attr("y2", y0)
-      .attr("stroke", "#4A5068")
-      .attr("stroke-width", 1);
+    svg.append("line")
+       .attr("x1", 0).attr("x2", innerW)
+       .attr("y1", y0).attr("y2", y0)
+       .attr("stroke", colorMuted)
+       .attr("stroke-width", 1);
 
-    svg
-      .append("line")
-      .attr("x1", x0).attr("x2", x0)
-      .attr("y1", 0) .attr("y2", innerH)
-      .attr("stroke", "#4A5068")
-      .attr("stroke-width", 1);
+    svg.append("line")
+       .attr("x1", x0).attr("x2", x0)
+       .attr("y1", 0) .attr("y2", innerH)
+       .attr("stroke", colorMuted)
+       .attr("stroke-width", 1);
 
-    // Axis labels
-    svg
-      .append("text")
-      .attr("x", innerW - 4)
-      .attr("y", y0 - 6)
-      .attr("fill", "#4A5068")
-      .attr("font-size", 9)
-      .attr("text-anchor", "end")
-      .text("σ");
-
-    svg
-      .append("text")
-      .attr("x", x0 + 6)
-      .attr("y", 10)
-      .attr("fill", "#4A5068")
-      .attr("font-size", 9)
-      .text("jω");
-
-    // Unit circle for digital filters
+    // Unit circle (Digital)
     if (filterType === "digital") {
       const r = Math.abs(xScale(1) - xScale(0));
-      svg
-        .append("circle")
-        .attr("cx", x0)
-        .attr("cy", y0)
-        .attr("r",  r)
-        .attr("fill", "none")
-        .attr("stroke", "#252A3A")
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "4,3");
+      svg.append("circle")
+         .attr("cx", x0)
+         .attr("cy", y0)
+         .attr("r",  r)
+         .attr("fill", "none")
+         .attr("stroke", colorMuted)
+         .attr("stroke-width", 1.5)
+         .attr("stroke-dasharray", "4,4")
+         .attr("opacity", 0.6);
     }
 
-    // Locus (circle or ellipse)
+    // Locus (Analog Chebyshev/Elliptic)
     if (locusType === "circle" && locusParams.radius) {
       const r = Math.abs(xScale(locusParams.radius) - xScale(0));
-      svg
-        .append("circle")
-        .attr("cx", x0)
-        .attr("cy", y0)
-        .attr("r",  r)
-        .attr("fill", "none")
-        .attr("stroke", "#FFB347")
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "4,3")
-        .attr("opacity", 0.5);
+      svg.append("circle")
+         .attr("cx", x0).attr("cy", y0).attr("r", r)
+         .attr("fill", "none").attr("stroke", colorLocus)
+         .attr("stroke-width", 1).attr("stroke-dasharray", "3,3")
+         .attr("opacity", 0.5);
     } else if (locusType === "ellipse" && locusParams.minor_axis) {
       const rx = Math.abs(xScale(locusParams.minor_axis) - xScale(0));
-      const ry = Math.abs(yScale(0) - yScale(locusParams.major_axis));
-      svg
-        .append("ellipse")
-        .attr("cx", x0)
-        .attr("cy", y0)
-        .attr("rx", rx)
-        .attr("ry", ry)
-        .attr("fill", "none")
-        .attr("stroke", "#FFB347")
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "4,3")
-        .attr("opacity", 0.5);
+      const ry = Math.abs(yScale(locusParams.major_axis) - yScale(0));
+      svg.append("ellipse")
+         .attr("cx", x0).attr("cy", y0).attr("rx", rx).attr("ry", ry)
+         .attr("fill", "none").attr("stroke", colorLocus)
+         .attr("stroke-width", 1).attr("stroke-dasharray", "3,3")
+         .attr("opacity", 0.5);
     }
 
-    // Tooltip div — created once, reused across re-renders to prevent DOM accumulation
+    // Tooltip
     if (!tooltipRef.current) {
-      tooltipRef.current = d3
-        .select(wrapperRef.current!)
+      tooltipRef.current = d3.select(containerRef.current!)
         .append("div")
-        .style("position",   "fixed")
-        .style("background", "var(--color-bg-elevated)")
-        .style("border",     "1px solid var(--color-border)")
-        .style("border-radius", "6px")
-        .style("padding",    "6px 10px")
-        .style("font-size",  "11px")
-        .style("font-family","IBM Plex Mono, monospace")
-        .style("color",      "var(--color-text-primary)")
+        .attr("class", "d3-tooltip")
+        .style("position", "fixed")
+        .style("background", colorBg)
+        .style("border", `1px solid ${colorBorder}`)
+        .style("border-radius", "8px")
+        .style("padding", "8px 12px")
+        .style("font-size", "11px")
+        .style("font-family", "var(--font-mono)")
+        .style("color", "var(--color-text-primary)")
         .style("pointer-events", "none")
-        .style("opacity", "0")
-        .style("transition", "opacity 150ms ease")
-        .style("z-index", "1000");
+        .style("opacity", 0)
+        .style("z-index", 100);
     }
     const tooltip = tooltipRef.current;
 
-    // Zeros — open circles
-    svg
-      .selectAll("circle.zero")
-      .data(zeros)
-      .enter()
-      .append("circle")
-      .attr("cx", (d) => xScale(d.real))
-      .attr("cy", (d) => yScale(d.imag))
-      .attr("r",  5)
-      .attr("fill",   "none")
-      .attr("stroke", "#4DFF9B")
-      .attr("stroke-width", 2)
-      .style("cursor", "pointer")
-      .on("mouseover", function (_event, d) {
-        d3.select(this).attr("r", 7);
-        tooltip
-          .style("opacity", "1")
-          .html(`Zero<br>σ = ${d.real.toFixed(4)}<br>jω = ${d.imag.toFixed(4)}`);
-      })
-      .on("mousemove", (event) => {
-        tooltip
-          .style("left", `${event.clientX + 12}px`)
-          .style("top",  `${event.clientY - 28}px`);
-      })
-      .on("mouseout", function () {
-        d3.select(this).attr("r", 5);
-        tooltip.style("opacity", "0");
-      });
+    // Zeros
+    svg.selectAll(".zero")
+       .data(zeros)
+       .enter()
+       .append("circle")
+       .attr("class", "zero")
+       .attr("cx", d => xScale(d.real))
+       .attr("cy", d => yScale(d.imag))
+       .attr("r", 5)
+       .attr("fill", "none")
+       .attr("stroke", colorZero)
+       .attr("stroke-width", 2)
+       .style("cursor", "pointer")
+       .on("mouseover", function(e, d) {
+         d3.select(this).attr("r", 7).attr("stroke-width", 3);
+         tooltip.style("opacity", 1).html(`<b>Zero</b><br>σ: ${d.real.toFixed(4)}<br>jω: ${d.imag.toFixed(4)}`);
+       })
+       .on("mousemove", e => tooltip.style("left", (e.clientX + 10) + "px").style("top", (e.clientY - 40) + "px"))
+       .on("mouseout", function() {
+         d3.select(this).attr("r", 5).attr("stroke-width", 2);
+         tooltip.style("opacity", 0);
+       });
 
-    // Poles — × markers
-    svg
-      .selectAll("g.pole")
+    // Poles
+    const poleGroup = svg.selectAll(".pole")
       .data(poles)
       .enter()
       .append("g")
       .attr("class", "pole")
-      .attr("transform", (d) => `translate(${xScale(d.real)},${yScale(d.imag)})`)
-      .style("cursor", "pointer")
-      .each(function (d) {
-        const g = d3.select(this);
-        const s = 5;
-        g.append("line")
-          .attr("x1", -s).attr("y1", -s)
-          .attr("x2",  s).attr("y2",  s)
-          .attr("stroke", "#FF4D6A")
-          .attr("stroke-width", 2)
-          .attr("stroke-linecap", "round");
-        g.append("line")
-          .attr("x1",  s).attr("y1", -s)
-          .attr("x2", -s).attr("y2",  s)
-          .attr("stroke", "#FF4D6A")
-          .attr("stroke-width", 2)
-          .attr("stroke-linecap", "round");
+      .attr("transform", d => `translate(${xScale(d.real)}, ${yScale(d.imag)})`)
+      .style("cursor", "pointer");
 
-        // Invisible hit area
-        g.append("circle")
-          .attr("r", 10)
-          .attr("fill", "transparent")
-          .on("mouseover", function () {
-            g.selectAll("line")
-              .attr("stroke-width", 3)
-              .attr("x1", (_, i) => i === 0 ? -7 :  7)
-              .attr("y1", (_, i) => i === 0 ? -7 : -7)
-              .attr("x2", (_, i) => i === 0 ?  7 : -7)
-              .attr("y2", (_, i) => i === 0 ?  7 :  7);
-            tooltip
-              .style("opacity", "1")
-              .html(`Pole<br>σ = ${d.real.toFixed(4)}<br>jω = ${d.imag.toFixed(4)}`);
-          })
-          .on("mousemove", (event) => {
-            tooltip
-              .style("left", `${event.clientX + 12}px`)
-              .style("top",  `${event.clientY - 28}px`);
-          })
-          .on("mouseout", function () {
-            g.selectAll("line")
-              .attr("stroke-width", 2)
-              .attr("x1", (_, i) => i === 0 ? -5 :  5)
-              .attr("y1", (_, i) => i === 0 ? -5 : -5)
-              .attr("x2", (_, i) => i === 0 ?  5 : -5)
-              .attr("y2", (_, i) => i === 0 ?  5 :  5);
-            tooltip.style("opacity", "0");
-          });
+    poleGroup.append("line").attr("x1", -5).attr("y1", -5).attr("x2", 5).attr("y2", 5).attr("stroke", colorPole).attr("stroke-width", 2);
+    poleGroup.append("line").attr("x1", 5).attr("y1", -5).attr("x2", -5).attr("y2", 5).attr("stroke", colorPole).attr("stroke-width", 2);
+
+    poleGroup.append("rect")
+      .attr("x", -10).attr("y", -10).attr("width", 20).attr("height", 20)
+      .attr("fill", "transparent")
+      .on("mouseover", function(e, d) {
+        d3.select(this.parentNode as any).selectAll("line").attr("stroke-width", 3).attr("x1", (v, i) => i === 0 ? -7 : 7).attr("y1", -7).attr("x2", (v, i) => i === 0 ? 7 : -7).attr("y2", 7);
+        tooltip.style("opacity", 1).html(`<b>Pole</b><br>σ: ${d.real.toFixed(4)}<br>jω: ${d.imag.toFixed(4)}`);
+      })
+      .on("mousemove", e => tooltip.style("left", (e.clientX + 10) + "px").style("top", (e.clientY - 40) + "px"))
+      .on("mouseout", function() {
+        d3.select(this.parentNode as any).selectAll("line").attr("stroke-width", 2).attr("x1", (v, i) => i === 0 ? -5 : 5).attr("y1", -5).attr("x2", (v, i) => i === 0 ? 5 : -5).attr("y2", 5);
+        tooltip.style("opacity", 0);
       });
 
-    // X axis ticks
-    svg
-      .append("g")
-      .attr("transform", `translate(0,${innerH})`)
-      .call(
-        d3
-          .axisBottom(xScale)
-          .ticks(6)
-          .tickSize(3)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .tickFormat((d: any) => Number(d).toFixed(1))
-      )
-      .call((g) => {
-        g.select(".domain").attr("stroke", "#4A5068");
-        g.selectAll("text")
-          .attr("fill", "#4A5068")
-          .attr("font-size", 9);
-        g.selectAll(".tick line").attr("stroke", "#4A5068");
-      });
+    // Axis Ticks
+    const xAxis = d3.axisBottom(xScale).ticks(8).tickFormat(d => Number(d).toFixed(1));
+    const yAxis = d3.axisLeft(yScale).ticks(6).tickFormat(d => Number(d).toFixed(1));
 
-    // Y axis ticks
-    svg
-      .append("g")
-      .call(
-        d3
-          .axisLeft(yScale)
-          .ticks(6)
-          .tickSize(3)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .tickFormat((d: any) => Number(d).toFixed(1))
-      )
-      .call((g) => {
-        g.select(".domain").attr("stroke", "#4A5068");
-        g.selectAll("text")
-          .attr("fill", "#4A5068")
-          .attr("font-size", 9);
-        g.selectAll(".tick line").attr("stroke", "#4A5068");
-      });
+    svg.append("g").attr("transform", `translate(0,${innerH})`).call(xAxis).selectAll("text").style("font-size", "10px").attr("fill", colorMuted);
+    svg.append("g").call(yAxis).selectAll("text").style("font-size", "10px").attr("fill", colorMuted);
+    svg.selectAll(".domain, .tick line").attr("stroke", colorMuted);
 
-    // Only remove tooltip on true component unmount (no-op on deps change)
     return () => {
       tooltipRef.current?.remove();
       tooltipRef.current = null;
@@ -319,13 +232,16 @@ export function PoleZeroPlot({
   }, [poles, zeros, locusType, locusParams, filterType]);
 
   return (
-    <div ref={wrapperRef} style={{ position: "relative" }}>
-      <svg
-        ref={svgRef}
-        width="100%"
-        height={280}
-        className="pz-plot-svg"
-      />
+    <div className="chart-container" ref={containerRef}>
+      <div className="table-actions">
+        <button className="icon-btn" onClick={() => handleDownload("svg")}>
+          🔻 SVG
+        </button>
+        <button className="icon-btn" onClick={() => handleDownload("png")}>
+          🖼️ PNG
+        </button>
+      </div>
+      <svg ref={svgRef} />
     </div>
   );
 }

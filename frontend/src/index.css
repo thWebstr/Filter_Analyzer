@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Poppins:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
 /* ============================================================
    FILTERANALYZER — Global Design System
    ============================================================ */
@@ -11,52 +13,9 @@
 }
 
 :root {
-  /* Brand */
-  --color-accent: #00d4ff;
-  --color-accent-dim: #0099bb;
-  --color-accent-glow: rgba(0, 212, 255, 0.15);
-
-  /* Backgrounds */
-  --color-bg-base: #0d0f14;
-  --color-bg-panel: #13161e;
-  --color-bg-card: #1a1e2a;
-  --color-bg-elevated: #20253a;
-  --color-bg-input: #0d0f14;
-
-  /* Text */
-  --color-text-primary: #e8eaf0;
-  --color-text-secondary: #8b90a0;
-  --color-text-muted: #4a5068;
-
-  /* Borders */
-  --color-border: #252a3a;
-  --color-border-focus: #00d4ff;
-
-  /* Semantic */
-  --color-error: #ff4d6a;
-  --color-error-bg: rgba(255, 77, 106, 0.08);
-  --color-warning: #ffb347;
-  --color-warning-bg: rgba(255, 179, 71, 0.08);
-  --color-success: #4dff9b;
-  --color-success-bg: rgba(77, 255, 155, 0.08);
-
-  /* Skeleton */
-  --color-skeleton-base: #1a1e2a;
-  --color-skeleton-highlight: #252a3a;
-
-  /* Plots */
-  --color-plot-magnitude: #00d4ff;
-  --color-plot-phase: #a78bfa;
-  --color-plot-group-delay: #4dff9b;
-  --color-plot-spec-line: #ff4d6a;
-  --color-pole: #ff4d6a;
-  --color-zero: #4dff9b;
-  --color-locus: #ffb347;
-  --color-compare: #ffb347;
-
   /* Typography */
-  --font-display: "IBM Plex Mono", monospace;
-  --font-body: "DM Sans", sans-serif;
+  --font-display: "Poppins", sans-serif;
+  --font-body: "Nunito", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
 
   /* Spacing */
@@ -70,9 +29,9 @@
   --space-10: 40px;
 
   /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -80,9 +39,86 @@
   --transition-slow: 400ms ease;
 
   /* Layout */
-  --sidebar-width: 300px;
-  --header-height: 56px;
-  --tabbar-height: 44px;
+  --sidebar-width: 320px;
+  --header-height: 64px;
+  --tabbar-height: 48px;
+}
+
+/* 🌙 Dark Theme (Default) */
+[data-theme="dark"],
+:root:not([data-theme="light"]) {
+  /* Brand */
+  --color-accent: #00d4ff;
+  --color-accent-dim: #0099bb;
+  --color-accent-glow: rgba(0, 212, 255, 0.15);
+
+  /* Backgrounds */
+  --color-bg-base: #0a0c10;
+  --color-bg-panel: #11141b;
+  --color-bg-card: #181c25;
+  --color-bg-elevated: #1f242f;
+  --color-bg-input: #0a0c10;
+
+  /* Text */
+  --color-text-primary: #f0f2f5;
+  --color-text-secondary: #a0a6b5;
+  --color-text-muted: #5e6679;
+
+  /* Borders */
+  --color-border: #262c3a;
+  --color-border-focus: #00d4ff;
+
+  /* Semantic */
+  --color-error: #ff4d6a;
+  --color-error-bg: rgba(255, 77, 106, 0.1);
+  --color-warning: #ffb347;
+  --color-warning-bg: rgba(255, 179, 71, 0.1);
+  --color-success: #4dff9b;
+  --color-success-bg: rgba(77, 255, 155, 0.1);
+
+  /* Plots */
+  --color-plot-magnitude: #00d4ff;
+  --color-plot-phase: #b794f4;
+  --color-plot-group-delay: #48bb78;
+  --color-plot-spec-line: #f56565;
+}
+
+/* ☀️ Light Theme */
+[data-theme="light"] {
+  /* Brand */
+  --color-accent: #0088cc;
+  --color-accent-dim: #006699;
+  --color-accent-glow: rgba(0, 136, 204, 0.1);
+
+  /* Backgrounds */
+  --color-bg-base: #f8fafc;
+  --color-bg-panel: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-elevated: #f1f5f9;
+  --color-bg-input: #ffffff;
+
+  /* Text */
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  /* Borders */
+  --color-border: #e2e8f0;
+  --color-border-focus: #0088cc;
+
+  /* Semantic */
+  --color-error: #e11d48;
+  --color-error-bg: #fff1f2;
+  --color-warning: #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-success: #16a34a;
+  --color-success-bg: #f0fdf4;
+
+  /* Plots */
+  --color-plot-magnitude: #0088cc;
+  --color-plot-phase: #7c3aed;
+  --color-plot-group-delay: #059669;
+  --color-plot-spec-line: #dc2626;
 }
 
 /* ============================================================
@@ -305,10 +341,11 @@ body {
 }
 
 .logo__wordmark {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-display);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
+  font-size: 18px;
 }
 
 .logo__wordmark-accent {
@@ -801,6 +838,130 @@ body {
 }
 
 /* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-accent);
+  transform: rotate(15deg);
+}
+
+/* ============================================================
+   BAND SELECTOR
+   ============================================================ */
+
+.band-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.band-selector__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.band-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-1);
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-text-secondary);
+}
+
+.band-btn:hover {
+  border-color: var(--color-accent-dim);
+  color: var(--color-text-primary);
+  background: var(--color-bg-card);
+}
+
+.band-btn.active {
+  background: var(--color-accent-glow);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.band-btn__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.band-btn__desc {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+/* ============================================================
+   DOWNLOAD BUTTONS
+   ============================================================ */
+
+.download-bar {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 6px 12px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.icon-btn:hover {
+  background: var(--color-bg-card);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+/* ============================================================
+   POLE-ZERO CIRCLE (Override for D3 unit circle)
+   ============================================================ */
+
+.pz-unit-circle {
+  stroke: var(--color-text-muted);
+  stroke-dasharray: 4, 4;
+  stroke-width: 1;
+  fill: none;
+  opacity: 0.4;
+}
+
+/* ============================================================
    CHART CONTAINER
    ============================================================ */
 
@@ -1131,3 +1292,9 @@ body {
 .tf-digital__a {
   margin-top: 4px;
 }
+
+.tf-digital__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
+.tf-digital__actions { display: flex; gap: var(--space-2); }
+.pz-table-container { overflow-x: auto; }
+.table-actions { display: flex; justify-content: flex-end; margin-bottom: var(--space-3); gap: var(--space-2); }
+

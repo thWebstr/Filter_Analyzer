@@ -110,6 +110,7 @@ export function ResultsPanel({
         </span>
         <span className="order-badge__epsilon">
           ε = {result.epsilon.toFixed(4)}
+          {result.epsilon_stop && ` · ε_stop = ${result.epsilon_stop.toFixed(4)}`}
         </span>
       </div>
 

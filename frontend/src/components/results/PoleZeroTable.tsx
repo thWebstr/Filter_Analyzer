@@ -1,4 +1,5 @@
 import type { ComplexNumber } from "../../types/filter";
+import { downloadCSV }        from "../../utils/download";
 
 interface Props {
   poles: ComplexNumber[];
@@ -36,8 +37,34 @@ function Row({
 }
 
 export function PoleZeroTable({ poles, zeros }: Props) {
+  const handleDownload = () => {
+    const rows = [
+      ["Type", "Real", "Imaginary", "Magnitude", "Angle (deg)"],
+      ...poles.map((p, i) => [
+        `pole_${i + 1}`,
+        p.real,
+        p.imag,
+        Math.sqrt(p.real ** 2 + p.imag ** 2),
+        Math.atan2(p.imag, p.real) * (180 / Math.PI),
+      ]),
+      ...zeros.map((z, i) => [
+        `zero_${i + 1}`,
+        z.real,
+        z.imag,
+        Math.sqrt(z.real ** 2 + z.imag ** 2),
+        Math.atan2(z.imag, z.real) * (180 / Math.PI),
+      ]),
+    ];
+    downloadCSV(rows, "filter_poles_zeros");
+  };
+
   return (
     <div className="pz-table-container">
+      <div className="table-actions">
+        <button className="icon-btn" onClick={handleDownload}>
+          💾 Download CSV
+        </button>
+      </div>
       <table className="pz-table">
         <thead>
           <tr>
