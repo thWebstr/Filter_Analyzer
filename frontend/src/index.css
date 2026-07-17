@@ -1450,14 +1450,6 @@ body {
   gap: var(--space-5);
 }
 
-@media (min-width: 1200px) {
-  .results-bottom-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-}
-
 @media (max-width: 768px) {
   .header {
     padding: 0 var(--space-3);
@@ -1536,7 +1528,20 @@ body {
     z-index: 500;
     background: var(--color-bg-base);
     animation: slideDown 300ms ease-out;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
   }
+}
+
+/* Prevent body and screen-level scrolling when mobile sidebar is open */
+html:has(.sidebar-open),
+body:has(.sidebar-open),
+#root:has(.sidebar-open) {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  position: relative !important;
 }
 
 @keyframes slideDown {
@@ -1775,4 +1780,57 @@ body {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+/* ============================================================
+   FREQ RANGE INPUTS (below magnitude chart)
+   ============================================================ */
+
+.freq-range-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.freq-range-inputs__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.freq-range-inputs__fields {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.freq-range-inputs__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.freq-range-inputs__input {
+  width: 110px;
+  height: 32px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.freq-range-inputs__sep {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  padding-top: 18px;
 }

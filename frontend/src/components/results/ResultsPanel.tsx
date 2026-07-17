@@ -1,4 +1,4 @@
-import { useState }                   from "react";
+import { useState, useEffect }             from "react";
 import type { FilterResult } from "../../types/filter";
 import { ErrorBanner }                from "../layout/ErrorBanner";
 import { MagnitudeResponsePlot }      from "./MagnitudeResponsePlot";
@@ -8,6 +8,7 @@ import { PoleZeroPlot }               from "./PoleZeroPlot";
 import { PoleZeroTable }              from "./PoleZeroTable";
 import { FrequencyDataTable }         from "./FrequencyDataTable";
 import { TransferFunctionDisplay }    from "./TransferFunctionDisplay";
+import { computeClientFreqResponse }  from "../../utils/evaluator";
 
 type PlotTab = "magnitude" | "phase" | "group_delay" | "pole_zero" | "data";
 
@@ -37,6 +38,34 @@ export function ResultsPanel({
   request,
 }: Props) {
   const [activePlot, setActivePlot] = useState<PlotTab>("magnitude");
+
+  const [freqMin, setFreqMin] = useState(0);
+  const [freqMax, setFreqMax] = useState(1);
+
+  // When result changes, reset zoom to the default data bounds
+  useEffect(() => {
+    if (result) {
+      const fArr = result.freq_response.frequency;
+      if (fArr.length > 0) {
+        setFreqMin(fArr[0]);
+        setFreqMax(fArr[fArr.length - 1]);
+      }
+    }
+  }, [result]);
+
+  // Compute dynamic client-side freq response
+  const currentFreqResponse = result
+    ? computeClientFreqResponse(
+        result.poly_num,
+        result.poly_den,
+        result.digital_coeffs,
+        result.filter_type,
+        result.locus_params?.sampling_freq || null, // fallback in case
+        freqMin,
+        freqMax,
+        freqUnit
+      )
+    : null;
 
   // ── Loading skeleton ──────────────────────────────────────────
   if (isLoading) {
@@ -73,7 +102,7 @@ export function ResultsPanel({
   }
 
   // ── Empty state ───────────────────────────────────────────────
-  if (!result) {
+  if (!result || !currentFreqResponse) {
     return (
       <div className="main results-empty-container">
         <div className="results-empty">
@@ -132,23 +161,35 @@ export function ResultsPanel({
 
         {activePlot === "magnitude" && (
           <MagnitudeResponsePlot
-            freqResponse={result.freq_response}
+            freqResponse={currentFreqResponse}
             wPass={request.w_pass}
             wStop={request.w_stop}
             aPass={request.a_pass}
             aStop={request.a_stop}
             freqUnit={freqUnit}
+            freqMin={freqMin}
+            freqMax={freqMax}
+            onMinChange={setFreqMin}
+            onMaxChange={setFreqMax}
+            onReset={() => {
+              const fArr = result.freq_response.frequency;
+              if (fArr.length > 0) {
+                setFreqMin(fArr[0]);
+                setFreqMax(fArr[fArr.length - 1]);
+              }
+            }}
           />
         )}
+
         {activePlot === "phase" && (
           <PhaseResponsePlot
-            freqResponse={result.freq_response}
+            freqResponse={currentFreqResponse}
             freqUnit={freqUnit}
           />
         )}
         {activePlot === "group_delay" && (
           <GroupDelayPlot
-            freqResponse={result.freq_response}
+            freqResponse={currentFreqResponse}
             freqUnit={freqUnit}
           />
         )}
@@ -163,7 +204,7 @@ export function ResultsPanel({
         )}
         {activePlot === "data" && (
           <FrequencyDataTable
-            freqResponse={result.freq_response}
+            freqResponse={currentFreqResponse}
             freqUnit={freqUnit}
           />
         )}

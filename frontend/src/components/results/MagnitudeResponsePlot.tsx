@@ -8,7 +8,7 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import type { FrequencyResponse } from "../../types/filter";
 import { downloadSVG, downloadPNG } from "../../utils/download";
 
@@ -19,6 +19,11 @@ interface Props {
   aPass: number;
   aStop: number;
   freqUnit: string;
+  freqMin: number;
+  freqMax: number;
+  onMinChange: (v: number) => void;
+  onMaxChange: (v: number) => void;
+  onReset: () => void;
 }
 
 export function MagnitudeResponsePlot({
@@ -28,18 +33,18 @@ export function MagnitudeResponsePlot({
   aPass,
   aStop,
   freqUnit,
+  freqMin,
+  freqMax,
+  onMinChange,
+  onMaxChange,
+  onReset,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [freqRange, setFreqRange] = useState(1.0);
 
-  const allData = freqResponse.frequency.map((f, i) => ({
+  const data = freqResponse.frequency.map((f, i) => ({
     f: parseFloat(f.toFixed(4)),
     mag: parseFloat(freqResponse.magnitude_db[i].toFixed(3)),
   }));
-
-  const fMax = allData.length > 0 ? allData[allData.length - 1].f : 1;
-  const cutoff = fMax * freqRange;
-  const data = allData.filter((d) => d.f <= cutoff);
 
   const handleDownload = (type: "svg" | "png") => {
     const svg = containerRef.current?.querySelector("svg");
@@ -51,33 +56,27 @@ export function MagnitudeResponsePlot({
   const fLabel = freqUnit === "hz" ? "Hz" : "rad/s";
   const yMin = Math.min(aStop - 10, -120);
 
+  const handleMinChange = (raw: string) => {
+    const v = parseFloat(raw);
+    if (!isNaN(v)) onMinChange(Math.max(0, v));
+  };
+
+  const handleMaxChange = (raw: string) => {
+    const v = parseFloat(raw);
+    if (!isNaN(v)) onMaxChange(Math.max(0, v));
+  };
+
+
   return (
     <div className="chart-container" ref={containerRef}>
-      <div className="chart-toolbar">
-        <div className="table-actions">
-          <button className="icon-btn" onClick={() => handleDownload("svg")}>
-            🔻 SVG
-          </button>
-          <button className="icon-btn" onClick={() => handleDownload("png")}>
-            🖼️ PNG
-          </button>
-        </div>
-        <div className="freq-range-control">
-          <span className="freq-range-control__label">Range</span>
-          <input
-            type="range"
-            className="freq-range-slider"
-            min={0.05}
-            max={1}
-            step={0.05}
-            value={freqRange}
-            onChange={(e) => setFreqRange(parseFloat(e.target.value))}
-            title={`Show up to ${cutoff.toFixed(2)} ${fLabel}`}
-          />
-          <span className="freq-range-control__val">
-            {freqRange === 1 ? "Full" : `${Math.round(freqRange * 100)}%`}
-          </span>
-        </div>
+      {/* Toolbar — download buttons only */}
+      <div className="table-actions">
+        <button className="icon-btn" onClick={() => handleDownload("svg")}>
+          🔻 SVG
+        </button>
+        <button className="icon-btn" onClick={() => handleDownload("png")}>
+          🖼️ PNG
+        </button>
       </div>
 
       <ResponsiveContainer width="100%" height={280}>
@@ -95,7 +94,7 @@ export function MagnitudeResponsePlot({
           <XAxis
             dataKey="f"
             type="number"
-            domain={["dataMin", "dataMax"]}
+            domain={[freqMin, freqMax]}
             tickFormatter={(v) => v.toFixed(1)}
             tick={{ fill: "var(--color-text-muted)", fontSize: 10 }}
             label={{
@@ -144,6 +143,47 @@ export function MagnitudeResponsePlot({
             strokeWidth={2} dot={false} activeDot={{ r: 3, fill: "var(--color-plot-magnitude)" }} />
         </LineChart>
       </ResponsiveContainer>
+
+      {/* Frequency range inputs — below the chart */}
+      <div className="freq-range-inputs">
+        <span className="freq-range-inputs__label">Freq. Range ({fLabel})</span>
+        <div className="freq-range-inputs__fields">
+          <label className="freq-range-inputs__field">
+            <span>Min</span>
+            <input
+              className="input-field freq-range-inputs__input"
+              type="number"
+              value={freqMin}
+              step="any"
+              title="Minimum frequency to display"
+              aria-label="Minimum frequency"
+              onChange={(e) => handleMinChange(e.target.value)}
+            />
+          </label>
+          <span className="freq-range-inputs__sep">—</span>
+          <label className="freq-range-inputs__field">
+            <span>Max</span>
+            <input
+              className="input-field freq-range-inputs__input"
+              type="number"
+              value={freqMax}
+              step="any"
+              title="Maximum frequency to display"
+              aria-label="Maximum frequency"
+              onChange={(e) => handleMaxChange(e.target.value)}
+            />
+          </label>
+
+          <button
+            className="icon-btn"
+            title="Reset to full range"
+            aria-label="Reset frequency range"
+            onClick={onReset}
+          >
+            ↺ Reset
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
