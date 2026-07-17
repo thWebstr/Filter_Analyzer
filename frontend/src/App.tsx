@@ -38,7 +38,7 @@ export default function App() {
       <div className={`app-shell ${showSplash ? "is-hidden" : ""} ${sidebarOpen ? "sidebar-open" : ""}`}>
         <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} sidebarOpen={sidebarOpen} />
         <TabBar />
-        <Sidebar tabId={activeId} />
+        <Sidebar tabId={activeId} onClose={() => setSidebarOpen(false)} />
         <ResultsPanel
           result={activeTab.result}
           isLoading={activeTab.isLoading}

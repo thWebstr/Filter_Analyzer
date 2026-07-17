@@ -169,13 +169,14 @@ export function ResultsPanel({
         )}
       </div>
 
-      {/* Transfer function */}
-      <TransferFunctionDisplay result={result} />
+      {/* Bottom row: Transfer function and Pole-zero table */}
+      <div className="results-bottom-row">
+        <TransferFunctionDisplay result={result} />
 
-      {/* Pole-zero table */}
-      <div className="chart-card">
-        <p className="chart-card__title">Poles & Zeros</p>
-        <PoleZeroTable poles={result.poles} zeros={result.zeros} />
+        <div className="chart-card">
+          <p className="chart-card__title">Poles & Zeros</p>
+          <PoleZeroTable poles={result.poles} zeros={result.zeros} />
+        </div>
       </div>
 
     </div>

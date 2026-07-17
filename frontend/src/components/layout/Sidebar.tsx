@@ -11,9 +11,10 @@ import type { BandConfig }    from "../../types/filter";
 
 interface Props {
   tabId: string;
+  onClose?: () => void;
 }
 
-export function Sidebar({ tabId }: Props) {
+export function Sidebar({ tabId, onClose }: Props) {
   const tabs          = useTabStore((s) => s.tabs);
   const updateRequest = useTabStore((s) => s.updateRequest);
   const setFreqUnit   = useTabStore((s) => s.setFreqUnit);
@@ -28,6 +29,7 @@ export function Sidebar({ tabId }: Props) {
 
   const handleDesign = () => {
     run(tab.request);
+    onClose?.();
   };
 
   // Band-config-aware pre-flight check
