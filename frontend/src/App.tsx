@@ -16,6 +16,8 @@ export default function App() {
   );
 
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const tabs     = useTabStore((s) => s.tabs);
   const activeId = useTabStore((s) => s.activeTabId);
   const setError = useTabStore((s) => s.setError);
@@ -33,8 +35,8 @@ export default function App() {
         />
       )}
 
-      <div className={`app-shell ${showSplash ? "is-hidden" : ""}`}>
-        <Header />
+      <div className={`app-shell ${showSplash ? "is-hidden" : ""} ${sidebarOpen ? "sidebar-open" : ""}`}>
+        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} sidebarOpen={sidebarOpen} />
         <TabBar />
         <Sidebar tabId={activeId} />
         <ResultsPanel

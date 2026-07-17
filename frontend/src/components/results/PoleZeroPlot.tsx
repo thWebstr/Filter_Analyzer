@@ -1,4 +1,4 @@
-import { useEffect, useRef }       from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import * as d3                  from "d3";
 import type { ComplexNumber }   from "../../types/filter";
 import { downloadSVG, downloadPNG } from "../../utils/download";
@@ -23,6 +23,22 @@ export function PoleZeroPlot({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipRef = useRef<d3.Selection<HTMLDivElement, unknown, null, undefined> | null>(null);
 
+  const [dimensions, setDimensions] = useState({ width: 0, height: 280 });
+
+  useLayoutEffect(() => {
+    function handleResize() {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: 280
+        });
+      }
+    }
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleDownload = (type: "svg" | "png") => {
     if (!svgRef.current) return;
     if (type === "svg") downloadSVG(svgRef.current, "pole_zero_plot");
@@ -30,7 +46,7 @@ export function PoleZeroPlot({
   };
 
   useEffect(() => {
-    if (!svgRef.current) return;
+    if (!svgRef.current || dimensions.width === 0) return;
 
     // Get theme colors from CSS variables
     const style = getComputedStyle(document.documentElement);
@@ -41,8 +57,8 @@ export function PoleZeroPlot({
     const colorLocus   = style.getPropertyValue("--color-warning").trim() || "#ffb347";
     const colorBg      = style.getPropertyValue("--color-bg-elevated").trim() || "#1f242f";
 
-    const W = containerRef.current?.clientWidth || 400;
-    const H = 280;
+    const W = dimensions.width;
+    const H = dimensions.height;
     const margin = { top: 20, right: 20, bottom: 30, left: 40 };
     const innerW = W - margin.left - margin.right;
     const innerH = H - margin.top  - margin.bottom;
@@ -67,16 +83,16 @@ export function PoleZeroPlot({
     const xExtent = d3.extent(allX) as [number, number];
     const yExtent = d3.extent(allY) as [number, number];
 
-    const xPad = Math.max(0.5, (xExtent[1] - xExtent[0]) * 0.3);
-    const yPad = Math.max(0.5, (yExtent[1] - yExtent[0]) * 0.3);
+    const xPad = Math.max(0.5, (xExtent[1] - (xExtent[0] || 0)) * 0.3);
+    const yPad = Math.max(0.5, (yExtent[1] - (yExtent[0] || 0)) * 0.3);
 
     const xDomain: [number, number] = [
-      Math.min(xExtent[0] - xPad, -1.2),
-      Math.max(xExtent[1] + xPad,  1.2),
+      Math.min(xExtent[0] || -1.2, -1.2) - xPad,
+      Math.max(xExtent[1] ||  1.2,  1.2) + xPad,
     ];
     const yDomain: [number, number] = [
-      Math.min(yExtent[0] - yPad, -1.2),
-      Math.max(yExtent[1] + yPad,  1.2),
+      Math.min(yExtent[0] || -1.2, -1.2) - yPad,
+      Math.max(yExtent[1] ||  1.2,  1.2) + yPad,
     ];
 
     const xScale = d3.scaleLinear().domain(xDomain).range([0, innerW]);
@@ -102,51 +118,31 @@ export function PoleZeroPlot({
        .attr("stroke", colorBorder)
        .attr("opacity", 0.3);
 
-    // Axes through origin
-    const x0 = xScale(0);
-    const y0 = yScale(0);
-
-    svg.append("line")
-       .attr("x1", 0).attr("x2", innerW)
-       .attr("y1", y0).attr("y2", y0)
-       .attr("stroke", colorMuted)
-       .attr("stroke-width", 1);
-
-    svg.append("line")
-       .attr("x1", x0).attr("x2", x0)
-       .attr("y1", 0) .attr("y2", innerH)
-       .attr("stroke", colorMuted)
-       .attr("stroke-width", 1);
-
-    // Unit circle (Digital)
+    // Unit circle (if digital) or jw axis (if analog)
     if (filterType === "digital") {
-      const r = Math.abs(xScale(1) - xScale(0));
-      svg.append("circle")
-         .attr("cx", x0)
-         .attr("cy", y0)
-         .attr("r",  r)
-         .attr("fill", "none")
-         .attr("stroke", colorMuted)
-         .attr("stroke-width", 1.5)
-         .attr("stroke-dasharray", "4,4")
-         .attr("opacity", 0.6);
-    }
-
-    // Locus (Analog Chebyshev/Elliptic)
-    if (locusType === "circle" && locusParams.radius) {
-      const r = Math.abs(xScale(locusParams.radius) - xScale(0));
-      svg.append("circle")
-         .attr("cx", x0).attr("cy", y0).attr("r", r)
-         .attr("fill", "none").attr("stroke", colorLocus)
-         .attr("stroke-width", 1).attr("stroke-dasharray", "3,3")
+      const circle = d3.arc()
+        .innerRadius(xScale(1) - xScale(0))
+        .outerRadius(xScale(1) - xScale(0) + 1)
+        .startAngle(0)
+        .endAngle(2 * Math.PI);
+        
+      svg.append("path")
+         .attr("d", circle as any)
+         .attr("transform", `translate(${xScale(0)},${yScale(0)})`)
+         .attr("fill", "var(--color-plot-spec-line)")
+         .attr("opacity", 0.3);
+    } else {
+      svg.append("line")
+         .attr("x1", xScale(0)).attr("x2", xScale(0))
+         .attr("y1", 0).attr("y2", innerH)
+         .attr("stroke", "var(--color-plot-spec-line)")
+         .attr("stroke-width", 1)
          .attr("opacity", 0.5);
-    } else if (locusType === "ellipse" && locusParams.minor_axis) {
-      const rx = Math.abs(xScale(locusParams.minor_axis) - xScale(0));
-      const ry = Math.abs(yScale(locusParams.major_axis) - yScale(0));
-      svg.append("ellipse")
-         .attr("cx", x0).attr("cy", y0).attr("rx", rx).attr("ry", ry)
-         .attr("fill", "none").attr("stroke", colorLocus)
-         .attr("stroke-width", 1).attr("stroke-dasharray", "3,3")
+      svg.append("line")
+         .attr("x1", 0).attr("x2", innerW)
+         .attr("y1", yScale(0)).attr("y2", yScale(0))
+         .attr("stroke", "var(--color-plot-spec-line)")
+         .attr("stroke-width", 1)
          .attr("opacity", 0.5);
     }
 
@@ -208,12 +204,14 @@ export function PoleZeroPlot({
       .attr("x", -10).attr("y", -10).attr("width", 20).attr("height", 20)
       .attr("fill", "transparent")
       .on("mouseover", function(e, d) {
-        d3.select(this.parentNode as any).selectAll("line").attr("stroke-width", 3).attr("x1", (v, i) => i === 0 ? -7 : 7).attr("y1", -7).attr("x2", (v, i) => i === 0 ? 7 : -7).attr("y2", 7);
+        // @ts-ignore
+        d3.select(this.parentNode).selectAll("line").attr("stroke-width", 3).attr("x1", (v, i) => i === 0 ? -7 : 7).attr("y1", -7).attr("x2", (v, i) => i === 0 ? 7 : -7).attr("y2", 7);
         tooltip.style("opacity", 1).html(`<b>Pole</b><br>σ: ${d.real.toFixed(4)}<br>jω: ${d.imag.toFixed(4)}`);
       })
       .on("mousemove", e => tooltip.style("left", (e.clientX + 10) + "px").style("top", (e.clientY - 40) + "px"))
       .on("mouseout", function() {
-        d3.select(this.parentNode as any).selectAll("line").attr("stroke-width", 2).attr("x1", (v, i) => i === 0 ? -5 : 5).attr("y1", -5).attr("x2", (v, i) => i === 0 ? 5 : -5).attr("y2", 5);
+        // @ts-ignore
+        d3.select(this.parentNode).selectAll("line").attr("stroke-width", 2).attr("x1", (v, i) => i === 0 ? -5 : 5).attr("y1", -5).attr("x2", (v, i) => i === 0 ? 5 : -5).attr("y2", 5);
         tooltip.style("opacity", 0);
       });
 
@@ -229,7 +227,7 @@ export function PoleZeroPlot({
       tooltipRef.current?.remove();
       tooltipRef.current = null;
     };
-  }, [poles, zeros, locusType, locusParams, filterType]);
+  }, [poles, zeros, locusType, locusParams, filterType, dimensions]);
 
   return (
     <div className="chart-container" ref={containerRef}>
