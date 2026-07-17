@@ -1,4 +1,4 @@
-import { useState, useEffect }             from "react";
+import { useState }             from "react";
 import type { FilterResult } from "../../types/filter";
 import { ErrorBanner }                from "../layout/ErrorBanner";
 import { MagnitudeResponsePlot }      from "./MagnitudeResponsePlot";
@@ -41,9 +41,11 @@ export function ResultsPanel({
 
   const [freqMin, setFreqMin] = useState(0);
   const [freqMax, setFreqMax] = useState(1);
+  const [prevResult, setPrevResult] = useState<FilterResult | null>(null);
 
-  // When result changes, reset zoom to the default data bounds
-  useEffect(() => {
+  // If a new result is designed, synchronize the zoom bounds immediately during render
+  if (result !== prevResult) {
+    setPrevResult(result);
     if (result) {
       const fArr = result.freq_response.frequency;
       if (fArr.length > 0) {
@@ -51,7 +53,8 @@ export function ResultsPanel({
         setFreqMax(fArr[fArr.length - 1]);
       }
     }
-  }, [result]);
+  }
+
 
   // Compute dynamic client-side freq response
   const currentFreqResponse = result
