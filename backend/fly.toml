@@ -1,0 +1,19 @@
+app = "filter-analyzer-api"
+primary_region = "lhr"     # London — change to your nearest: iad (US East), sjc (US West), sin (Singapore)
+
+[build]
+dockerfile = "Dockerfile"
+
+[http_service]
+internal_port = 8000
+force_https = true
+auto_stop_machines = "stop"     # Saves free allowance when idle
+auto_start_machines = true
+min_machines_running = 0
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "512mb"
+
+[env]
+  FRONTEND_ORIGIN = "https://filter-analyzer.vercel.app"   # update to your Vercel URL
