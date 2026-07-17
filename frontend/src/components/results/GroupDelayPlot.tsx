@@ -59,11 +59,11 @@ export function GroupDelayPlot({ freqResponse, freqUnit }: Props) {
         >
           <defs>
             <pattern id="grid-minor-gd" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--color-border)" strokeWidth="0.5" opacity="0.15"/>
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--color-border)" strokeWidth="0.5" opacity="0.35"/>
             </pattern>
             <pattern id="grid-major-gd" width="50" height="50" patternUnits="userSpaceOnUse">
               <rect width="50" height="50" fill="url(#grid-minor-gd)"/>
-              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--color-border)" strokeWidth="1" opacity="0.3"/>
+              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--color-border)" strokeWidth="1" opacity="0.55"/>
             </pattern>
           </defs>
           <CartesianGrid

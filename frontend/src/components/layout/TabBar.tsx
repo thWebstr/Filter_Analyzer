@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { useTabStore } from "../../store/tabStore";
 
 export function TabBar() {
@@ -6,6 +7,37 @@ export function TabBar() {
   const addTab    = useTabStore((s) => s.addTab);
   const closeTab  = useTabStore((s) => s.closeTab);
   const setActive = useTabStore((s) => s.setActiveTab);
+  const renameTab = useTabStore((s) => s.renameTab);
+
+  const [editingId, setEditingId]   = useState<string | null>(null);
+  const [editValue, setEditValue]   = useState("");
+  const inputRef                    = useRef<HTMLInputElement>(null);
+
+  // Focus input when editing begins
+  useEffect(() => {
+    if (editingId && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingId]);
+
+  const startEdit = (id: string, currentName: string) => {
+    setEditingId(id);
+    setEditValue(currentName);
+  };
+
+  const commitEdit = () => {
+    if (editingId) {
+      const trimmed = editValue.trim();
+      if (trimmed) renameTab(editingId, trimmed);
+    }
+    setEditingId(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter")  commitEdit();
+    if (e.key === "Escape") setEditingId(null);
+  };
 
   return (
     <div className="tabbar">
@@ -20,7 +52,30 @@ export function TabBar() {
             <span className="tab__unsaved" />
           )}
 
-          <span>{tab.name}</span>
+          {/* Inline rename input or label */}
+          {editingId === tab.id ? (
+            <input
+              ref={inputRef}
+              className="tab__rename-input"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              maxLength={32}
+            />
+          ) : (
+            <span
+              className="tab__name"
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                startEdit(tab.id, tab.name);
+              }}
+              title="Double-click to rename"
+            >
+              {tab.name}
+            </span>
+          )}
 
           {/* Loading indicator */}
           {tab.isLoading && (

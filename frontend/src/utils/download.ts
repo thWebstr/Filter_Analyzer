@@ -21,53 +21,49 @@ function cloneAndResolveSVG(svgEl: SVGSVGElement): SVGSVGElement {
   }
   clone.style.backgroundColor = bg;
 
+  const stylesToCopy = [
+    "stroke",
+    "stroke-width",
+    "stroke-dasharray",
+    "stroke-opacity",
+    "stroke-linecap",
+    "stroke-linejoin",
+    "fill",
+    "fill-opacity",
+    "stop-color",
+    "stop-opacity",
+    "opacity",
+    "font-size",
+    "font-family",
+    "font-weight",
+    "text-anchor",
+    "display",
+    "visibility"
+  ];
+
   origElements.forEach((orig, idx) => {
     const cloned = cloneElements[idx];
     if (!cloned) return;
 
     const elStyle = window.getComputedStyle(orig);
-    const attrs = [
-      "stroke",
-      "fill",
-      "color",
-      "background-color",
-      "border-color",
-      "stop-color",
-      "flood-color",
-      "lighting-color"
-    ];
 
-    attrs.forEach((attr) => {
-      let val = orig.getAttribute(attr);
-      if (!val) {
-        val = orig.style.getPropertyValue(attr);
-      }
-      if (val && val.includes("var(")) {
-        const varNameMatch = val.match(/var\(([^)]+)\)/);
-        if (varNameMatch) {
-          const varName = varNameMatch[1].trim();
-          const resolved = elStyle.getPropertyValue(varName).trim();
-          if (resolved) {
-            cloned.setAttribute(attr, resolved);
-          }
+    stylesToCopy.forEach((prop) => {
+      let val = elStyle.getPropertyValue(prop);
+      if (val && val !== "none" && val !== "normal" && val !== "") {
+        // Normalize url() values (e.g. url("http://localhost:3000/#grid-minor-mag") -> url(#grid-minor-mag))
+        if (val.includes("url(")) {
+          val = val.replace(/url\(['"]?.*?#([^'"]+?)['"]?\)/g, 'url(#$1)');
         }
+        cloned.style.setProperty(prop, val);
+      } else if (prop === "stroke" || prop === "fill") {
+        cloned.style.setProperty(prop, val);
       }
     });
-
-    const styleAttr = orig.getAttribute("style");
-    if (styleAttr && styleAttr.includes("var(")) {
-      const props = ["stroke", "fill", "background-color", "color"];
-      props.forEach((prop) => {
-        const resolved = elStyle.getPropertyValue(prop);
-        if (resolved) {
-          cloned.style.setProperty(prop, resolved);
-        }
-      });
-    }
   });
 
   return clone;
 }
+
 
 /** Serialize and download an SVG element as an .svg file. */
 export function downloadSVG(svgEl: SVGSVGElement, filename: string): void {

@@ -48,11 +48,11 @@ export function PhaseResponsePlot({ freqResponse, freqUnit }: Props) {
         <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
           <defs>
             <pattern id="grid-minor-phase" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--color-border)" strokeWidth="0.5" opacity="0.15"/>
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--color-border)" strokeWidth="0.5" opacity="0.35"/>
             </pattern>
             <pattern id="grid-major-phase" width="50" height="50" patternUnits="userSpaceOnUse">
               <rect width="50" height="50" fill="url(#grid-minor-phase)"/>
-              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--color-border)" strokeWidth="1" opacity="0.3"/>
+              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--color-border)" strokeWidth="1" opacity="0.55"/>
             </pattern>
           </defs>
           <CartesianGrid
