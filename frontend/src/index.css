@@ -86,39 +86,39 @@
 /* ☀️ Light Theme */
 [data-theme="light"] {
   /* Brand */
-  --color-accent: #0088cc;
-  --color-accent-dim: #006699;
-  --color-accent-glow: rgba(0, 136, 204, 0.1);
+  --color-accent: #0073b6;
+  --color-accent-dim: #005a8e;
+  --color-accent-glow: rgba(0, 115, 182, 0.12);
 
-  /* Backgrounds */
-  --color-bg-base: #eff2f7;
-  --color-bg-panel: #e8ecf3;
-  --color-bg-card: #f4f6fa;
-  --color-bg-elevated: #e8ecf3;
-  --color-bg-input: #dde2eb;
+  /* Backgrounds — warm off-white palette */
+  --color-bg-base: #f5f3f0;
+  --color-bg-panel: #edeae5;
+  --color-bg-card: #faf9f7;
+  --color-bg-elevated: #e8e4df;
+  --color-bg-input: #e2ded8;
 
   /* Text */
-  --color-text-primary: #1e293b;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  --color-text-primary: #1c2535;
+  --color-text-secondary: #44546a;
+  --color-text-muted: #8a96a8;
 
   /* Borders */
-  --color-border: #e2e8f0;
-  --color-border-focus: #0088cc;
+  --color-border: #d8d3cb;
+  --color-border-focus: #0073b6;
 
   /* Semantic */
-  --color-error: #e11d48;
-  --color-error-bg: #fff1f2;
-  --color-warning: #d97706;
-  --color-warning-bg: #fffbeb;
-  --color-success: #16a34a;
-  --color-success-bg: #f0fdf4;
+  --color-error: #c8264b;
+  --color-error-bg: #fdf0f3;
+  --color-warning: #c96a00;
+  --color-warning-bg: #fdf5e6;
+  --color-success: #147a40;
+  --color-success-bg: #eefaf2;
 
   /* Plots */
-  --color-plot-magnitude: #0088cc;
-  --color-plot-phase: #7c3aed;
-  --color-plot-group-delay: #059669;
-  --color-plot-spec-line: #dc2626;
+  --color-plot-magnitude: #0073b6;
+  --color-plot-phase: #6d28d9;
+  --color-plot-group-delay: #0a6640;
+  --color-plot-spec-line: #be2020;
 }
 
 /* ============================================================
@@ -366,6 +366,9 @@ body {
   gap: var(--space-1);
   overflow-x: auto;
   overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  scroll-snap-type: x proximity;
 }
 
 .tabbar::-webkit-scrollbar {
@@ -1600,4 +1603,176 @@ body {
 .recharts-wrapper,
 .recharts-surface {
   touch-action: pan-y !important;
+}
+
+/* ============================================================
+   MOTION / MICRO-ANIMATIONS
+   ============================================================ */
+
+/* --- Keyframes --- */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tab-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes sidebar-section-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes plot-tab-underline {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* --- Chart cards: staggered entrance --- */
+.main > * {
+  animation: card-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.main > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.main > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.main > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.main > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+/* --- Chart card hover lift --- */
+.chart-card {
+  transition:
+    box-shadow var(--transition-normal),
+    transform var(--transition-normal),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+/* --- Order badge number pop on result --- */
+.order-badge {
+  animation: badge-pop 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* --- Tab slide-in --- */
+.tab {
+  animation: tab-enter 200ms ease both;
+}
+
+/* --- Sidebar section stagger --- */
+.sidebar__section {
+  animation: sidebar-section-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.sidebar__section:nth-child(1) {
+  animation-delay: 30ms;
+}
+.sidebar__section:nth-child(2) {
+  animation-delay: 80ms;
+}
+.sidebar__section:nth-child(3) {
+  animation-delay: 130ms;
+}
+.sidebar__section:nth-child(4) {
+  animation-delay: 180ms;
+}
+.sidebar__section:nth-child(5) {
+  animation-delay: 230ms;
+}
+.sidebar__section:nth-child(6) {
+  animation-delay: 270ms;
+}
+
+/* --- Active plot tab underline animation --- */
+.plot-tab.active {
+  position: relative;
+}
+.plot-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--color-accent);
+  border-radius: 2px 2px 0 0;
+  transform-origin: left center;
+  animation: plot-tab-underline 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* --- Button press micro-feedback --- */
+.toggle-btn:active,
+.band-btn:active,
+.approx-btn:active,
+.icon-btn:active,
+.btn-ghost:active,
+.mobile-toggle:active {
+  transform: scale(0.95);
+  transition: transform 80ms ease;
+}
+
+/* --- Input focus ring animation --- */
+.input-field {
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+/* --- Sidebar mobile overlay slide-down (already exists but tweak duration) --- */
+@keyframes slideDown {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

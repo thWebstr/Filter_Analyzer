@@ -63,6 +63,8 @@ export function TabBar() {
               onKeyDown={handleKeyDown}
               onClick={(e) => e.stopPropagation()}
               maxLength={32}
+              title="Rename tab"
+              aria-label="Rename tab"
             />
           ) : (
             <span
