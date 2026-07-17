@@ -2,10 +2,78 @@
  * Download utility functions for plots and tables.
  */
 
+/** Helper to clone SVG and resolve active document CSS variables to static colors. */
+function cloneAndResolveSVG(svgEl: SVGSVGElement): SVGSVGElement {
+  const clone = svgEl.cloneNode(true) as SVGSVGElement;
+  
+  const origElements = Array.from(svgEl.querySelectorAll("*")) as SVGElement[];
+  const cloneElements = Array.from(clone.querySelectorAll("*")) as SVGElement[];
+  origElements.unshift(svgEl);
+  cloneElements.unshift(clone);
+
+  const docStyle = getComputedStyle(document.documentElement);
+  const style = window.getComputedStyle(svgEl);
+  let bg = style.backgroundColor;
+  // If background is transparent/not defined, look up parent hierarchy or fallback to theme card color
+  if (!bg || bg === "rgba(0, 0, 0, 0)" || bg === "transparent") {
+    const parentStyle = svgEl.parentElement ? window.getComputedStyle(svgEl.parentElement) : null;
+    bg = parentStyle?.backgroundColor || docStyle.getPropertyValue("--color-bg-card").trim() || "#181c25";
+  }
+  clone.style.backgroundColor = bg;
+
+  origElements.forEach((orig, idx) => {
+    const cloned = cloneElements[idx];
+    if (!cloned) return;
+
+    const elStyle = window.getComputedStyle(orig);
+    const attrs = [
+      "stroke",
+      "fill",
+      "color",
+      "background-color",
+      "border-color",
+      "stop-color",
+      "flood-color",
+      "lighting-color"
+    ];
+
+    attrs.forEach((attr) => {
+      let val = orig.getAttribute(attr);
+      if (!val) {
+        val = orig.style.getPropertyValue(attr);
+      }
+      if (val && val.includes("var(")) {
+        const varNameMatch = val.match(/var\(([^)]+)\)/);
+        if (varNameMatch) {
+          const varName = varNameMatch[1].trim();
+          const resolved = elStyle.getPropertyValue(varName).trim();
+          if (resolved) {
+            cloned.setAttribute(attr, resolved);
+          }
+        }
+      }
+    });
+
+    const styleAttr = orig.getAttribute("style");
+    if (styleAttr && styleAttr.includes("var(")) {
+      const props = ["stroke", "fill", "background-color", "color"];
+      props.forEach((prop) => {
+        const resolved = elStyle.getPropertyValue(prop);
+        if (resolved) {
+          cloned.style.setProperty(prop, resolved);
+        }
+      });
+    }
+  });
+
+  return clone;
+}
+
 /** Serialize and download an SVG element as an .svg file. */
 export function downloadSVG(svgEl: SVGSVGElement, filename: string): void {
+  const resolvedSvg = cloneAndResolveSVG(svgEl);
   const serializer = new XMLSerializer();
-  const source = serializer.serializeToString(svgEl);
+  const source = serializer.serializeToString(resolvedSvg);
   const svgBlob = new Blob(
     ['<?xml version="1.0" standalone="no"?>\r\n', source],
     { type: "image/svg+xml;charset=utf-8" }
@@ -17,8 +85,9 @@ export function downloadSVG(svgEl: SVGSVGElement, filename: string): void {
 
 /** Render an SVG element to canvas and download as a .png file. */
 export function downloadPNG(svgEl: SVGSVGElement, filename: string): void {
+  const resolvedSvg = cloneAndResolveSVG(svgEl);
   const serializer = new XMLSerializer();
-  const source = serializer.serializeToString(svgEl);
+  const source = serializer.serializeToString(resolvedSvg);
   const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
 
@@ -31,9 +100,8 @@ export function downloadPNG(svgEl: SVGSVGElement, filename: string): void {
     canvas.height = h * 2;
     const ctx = canvas.getContext("2d")!;
     ctx.scale(2, 2);
-    // Fill background so transparent SVG → white PNG
-    ctx.fillStyle = getComputedStyle(document.documentElement)
-      .getPropertyValue("--color-bg-card").trim() || "#1a1e2a";
+    // Fill background so transparent SVG → white/theme PNG
+    ctx.fillStyle = resolvedSvg.style.backgroundColor || "#1a1e2a";
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
     canvas.toBlob((blob) => {

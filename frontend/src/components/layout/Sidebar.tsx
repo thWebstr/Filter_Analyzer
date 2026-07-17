@@ -25,8 +25,6 @@ export function Sidebar({ tabId }: Props) {
   if (!tab) return null;
 
   const bc   = tab.request.band_config;
-  const isBP = bc === "bandpass";
-  const isBS = bc === "bandstop";
 
   const handleDesign = () => {
     run(tab.request);

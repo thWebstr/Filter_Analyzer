@@ -20,7 +20,6 @@ export function PoleZeroPlot({
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipRef = useRef<d3.Selection<HTMLDivElement, unknown, null, undefined> | null>(null);
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 280 });
@@ -54,7 +53,6 @@ export function PoleZeroPlot({
     const colorMuted   = style.getPropertyValue("--color-text-muted").trim() || "#5e6679";
     const colorPole    = style.getPropertyValue("--color-error").trim() || "#ff4d6a";
     const colorZero    = style.getPropertyValue("--color-success").trim() || "#4dff9b";
-    const colorLocus   = style.getPropertyValue("--color-warning").trim() || "#ffb347";
     const colorBg      = style.getPropertyValue("--color-bg-elevated").trim() || "#1f242f";
 
     const W = dimensions.width;
@@ -98,25 +96,44 @@ export function PoleZeroPlot({
     const xScale = d3.scaleLinear().domain(xDomain).range([0, innerW]);
     const yScale = d3.scaleLinear().domain(yDomain).range([innerH, 0]);
 
-    // Grid
-    const makeGrid = (scale: d3.AxisScale<any>, orient: "bottom" | "left") =>
-      (orient === "bottom" ? d3.axisBottom(scale) : d3.axisLeft(scale))
-        .ticks(8)
-        .tickSize(- (orient === "bottom" ? innerH : innerW))
-        .tickFormat(() => "");
+    // Defs & Grid paper patterns
+    const defs = d3.select(svgRef.current).append("defs");
+    
+    // Minor pattern (10px spacing)
+    const patMinor = defs.append("pattern")
+      .attr("id", "pz-grid-minor")
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("patternUnits", "userSpaceOnUse");
+    patMinor.append("path")
+      .attr("d", "M 10 0 L 0 0 0 10")
+      .attr("fill", "none")
+      .attr("stroke", colorBorder)
+      .attr("stroke-width", 0.5)
+      .attr("opacity", 0.15);
 
-    svg.append("g")
-       .attr("class", "pz-grid")
-       .attr("transform", `translate(0,${innerH})`)
-       .call(makeGrid(xScale, "bottom"))
-       .attr("stroke", colorBorder)
-       .attr("opacity", 0.3);
+    // Major pattern (50px spacing)
+    const patMajor = defs.append("pattern")
+      .attr("id", "pz-grid-major")
+      .attr("width", 50)
+      .attr("height", 50)
+      .attr("patternUnits", "userSpaceOnUse");
+    patMajor.append("rect")
+      .attr("width", 50)
+      .attr("height", 50)
+      .attr("fill", "url(#pz-grid-minor)");
+    patMajor.append("path")
+      .attr("d", "M 50 0 L 0 0 0 50")
+      .attr("fill", "none")
+      .attr("stroke", colorBorder)
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.3);
 
-    svg.append("g")
-       .attr("class", "pz-grid")
-       .call(makeGrid(yScale, "left"))
-       .attr("stroke", colorBorder)
-       .attr("opacity", 0.3);
+    // Render background engineering grid rect
+    svg.append("rect")
+       .attr("width", innerW)
+       .attr("height", innerH)
+       .attr("fill", "url(#pz-grid-major)");
 
     // Unit circle (if digital) or jw axis (if analog)
     if (filterType === "digital") {
@@ -127,7 +144,7 @@ export function PoleZeroPlot({
         .endAngle(2 * Math.PI);
         
       svg.append("path")
-         .attr("d", circle as any)
+         .attr("d", circle as unknown as (d: unknown) => string)
          .attr("transform", `translate(${xScale(0)},${yScale(0)})`)
          .attr("fill", "var(--color-plot-spec-line)")
          .attr("opacity", 0.3);
@@ -178,12 +195,12 @@ export function PoleZeroPlot({
        .attr("stroke", colorZero)
        .attr("stroke-width", 2)
        .style("cursor", "pointer")
-       .on("mouseover", function(e, d) {
+       .on("mouseover", function(this: SVGCircleElement, _e, d) {
          d3.select(this).attr("r", 7).attr("stroke-width", 3);
          tooltip.style("opacity", 1).html(`<b>Zero</b><br>σ: ${d.real.toFixed(4)}<br>jω: ${d.imag.toFixed(4)}`);
        })
        .on("mousemove", e => tooltip.style("left", (e.clientX + 10) + "px").style("top", (e.clientY - 40) + "px"))
-       .on("mouseout", function() {
+       .on("mouseout", function(this: SVGCircleElement) {
          d3.select(this).attr("r", 5).attr("stroke-width", 2);
          tooltip.style("opacity", 0);
        });
@@ -203,14 +220,14 @@ export function PoleZeroPlot({
     poleGroup.append("rect")
       .attr("x", -10).attr("y", -10).attr("width", 20).attr("height", 20)
       .attr("fill", "transparent")
-      .on("mouseover", function(e, d) {
-        // @ts-ignore
+      .on("mouseover", function(_e, d) {
+        // @ts-expect-error - parentNode typings are not resolved by compile target
         d3.select(this.parentNode).selectAll("line").attr("stroke-width", 3).attr("x1", (v, i) => i === 0 ? -7 : 7).attr("y1", -7).attr("x2", (v, i) => i === 0 ? 7 : -7).attr("y2", 7);
         tooltip.style("opacity", 1).html(`<b>Pole</b><br>σ: ${d.real.toFixed(4)}<br>jω: ${d.imag.toFixed(4)}`);
       })
       .on("mousemove", e => tooltip.style("left", (e.clientX + 10) + "px").style("top", (e.clientY - 40) + "px"))
       .on("mouseout", function() {
-        // @ts-ignore
+        // @ts-expect-error - parentNode typings are not resolved by compile target
         d3.select(this.parentNode).selectAll("line").attr("stroke-width", 2).attr("x1", (v, i) => i === 0 ? -5 : 5).attr("y1", -5).attr("x2", (v, i) => i === 0 ? 5 : -5).attr("y2", 5);
         tooltip.style("opacity", 0);
       });
