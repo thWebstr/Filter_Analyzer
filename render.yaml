@@ -1,0 +1,31 @@
+# render.yaml — Render.com multi-service deployment
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ── Backend (FastAPI) ─────────────────────────────────────────
+  - type: web
+    name: filter-analyzer-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: FRONTEND_ORIGIN
+        value: https://filter-analyzer.onrender.com   # update after first deploy
+
+  # ── Frontend (Static) ─────────────────────────────────────────
+  - type: web
+    name: filter-analyzer
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        value: https://filter-analyzer-api.onrender.com   # update after first deploy
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
