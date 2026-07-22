@@ -2,6 +2,7 @@ import math
 import numpy as np
 from scipy import signal
 from scipy.signal import tf2zpk, zpk2tf, lp2hp_zpk, lp2bp_zpk, lp2bs_zpk
+from engine.common import compute_lp_selectivity
 
 
 def apply_bilinear_transform(
@@ -44,8 +45,7 @@ def apply_bilinear_transform(
     ws2 = prewarp(w_stop2_rads) if w_stop2_rads else None
 
     # --- Step 3: Compute LP prototype selectivity ---
-    from api.routes import _lp_selectivity
-    w_pass_lp, w_stop_lp = _lp_selectivity(band_config, wp1, ws1, wp2, ws2)
+    w_pass_lp, w_stop_lp = compute_lp_selectivity(band_config, wp1, ws1, wp2, ws2)
 
     # --- Step 4: Design LP prototype ---
     analog_lp = design_fn(

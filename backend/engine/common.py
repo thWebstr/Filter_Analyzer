@@ -38,6 +38,39 @@ def normalize_frequencies(w_pass: float, w_stop: float, freq_unit: str):
     return w_pass, w_stop
 
 
+def compute_lp_selectivity(
+    band_config: str,
+    w_pass: float,
+    w_stop: float,
+    w_pass2: float | None = None,
+    w_stop2: float | None = None,
+) -> tuple[float, float]:
+    """Return normalized low-pass prototype edge frequencies for analog/digital transforms."""
+    if band_config == "lowpass":
+        return w_pass, w_stop
+
+    if band_config == "highpass":
+        return 1.0, w_pass / w_stop
+
+    if band_config == "bandpass":
+        assert w_pass2 is not None and w_stop2 is not None
+        w0 = math.sqrt(w_pass * w_pass2)
+        bw = w_pass2 - w_pass
+        omega_s1 = abs((w_stop ** 2 - w0 ** 2) / (bw * w_stop))
+        omega_s2 = abs((w_stop2 ** 2 - w0 ** 2) / (bw * w_stop2))
+        return 1.0, min(omega_s1, omega_s2)
+
+    if band_config == "bandstop":
+        assert w_pass2 is not None and w_stop2 is not None
+        w0 = math.sqrt(w_stop * w_stop2)
+        bw = w_stop2 - w_stop
+        omega_p1 = abs((w_pass ** 2 - w0 ** 2) / (bw * w_pass))
+        omega_p2 = abs((w_pass2 ** 2 - w0 ** 2) / (bw * w_pass2))
+        return 1.0, min(omega_p1, omega_p2)
+
+    raise ValueError(f"Unsupported band_config: {band_config}")
+
+
 def build_quadratic_factor(sigma: float, omega: float) -> list:
     """
     Build coefficients [1, B1m, B2m] for a quadratic denominator factor.
