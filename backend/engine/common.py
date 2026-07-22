@@ -88,6 +88,7 @@ def compute_frequency_response(
     w_pass: float,
     w_stop: float,
     n_points: int = 2000,
+    w_max: float | None = None,
 ) -> dict:
     """
     Evaluate |H(jw)|, phase, and group delay over a frequency range.
@@ -96,8 +97,9 @@ def compute_frequency_response(
     Returns dict with keys:
         frequency, magnitude_db, phase_deg, group_delay
     """
-    # Frequency range: 0 to 3 * w_stop
-    w_max = 3 * w_stop
+    # Frequency range: 0 to 3 * w_stop by default, or use caller-provided max.
+    if w_max is None:
+        w_max = 3 * w_stop
     frequencies = np.linspace(0.001 * w_pass, w_max, n_points)
 
     magnitude_db = []
