@@ -1,11 +1,12 @@
-import { useState }           from "react";
-import { SplashScreen }       from "./components/layout/SplashScreen";
-import { Header }             from "./components/layout/Header";
-import { TabBar }             from "./components/layout/TabBar";
-import { Sidebar }            from "./components/layout/Sidebar";
-import { ResultsPanel }       from "./components/results/ResultsPanel";
-import { useTabStore }        from "./store/tabStore";
-import { useThemeInit }       from "./utils/theme";
+import { useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
+import { SplashScreen } from "./components/layout/SplashScreen";
+import { Header } from "./components/layout/Header";
+import { TabBar } from "./components/layout/TabBar";
+import { Sidebar } from "./components/layout/Sidebar";
+import { ResultsPanel } from "./components/results/ResultsPanel";
+import { useTabStore } from "./store/tabStore";
+import { useThemeInit } from "./utils/theme";
 
 const SPLASH_KEY = "fa_splash_shown";
 
@@ -18,7 +19,7 @@ export default function App() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const tabs     = useTabStore((s) => s.tabs);
+  const tabs = useTabStore((s) => s.tabs);
   const activeId = useTabStore((s) => s.activeTabId);
   const setError = useTabStore((s) => s.setError);
 
@@ -48,6 +49,7 @@ export default function App() {
           request={activeTab.request}
         />
       </div>
+      <Analytics />
     </>
   );
 }
