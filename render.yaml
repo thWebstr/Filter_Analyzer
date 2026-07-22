@@ -21,7 +21,6 @@ services:
     runtime: static
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: ./frontend/dist
-    plan: free
     envVars:
       - key: VITE_API_URL
         value: https://filter-analyzer-api.onrender.com   # update after first deploy
